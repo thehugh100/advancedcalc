@@ -1,0 +1,47 @@
+[
+{
+  "directory": "/Users/hugh/Documents/tests/advancedcalc/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk -std=gnu++20 -o CMakeFiles/advancedcalc.dir/main.cpp.o -c /Users/hugh/Documents/tests/advancedcalc/main.cpp",
+  "file": "/Users/hugh/Documents/tests/advancedcalc/main.cpp"
+},
+{
+  "directory": "/Users/hugh/Documents/tests/advancedcalc/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk -std=gnu++20 -o CMakeFiles/advancedcalc.dir/Calculator.cpp.o -c /Users/hugh/Documents/tests/advancedcalc/Calculator.cpp",
+  "file": "/Users/hugh/Documents/tests/advancedcalc/Calculator.cpp"
+},
+{
+  "directory": "/Users/hugh/Documents/tests/advancedcalc/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk -std=gnu++20 -o CMakeFiles/advancedcalc.dir/Token.cpp.o -c /Users/hugh/Documents/tests/advancedcalc/Token.cpp",
+  "file": "/Users/hugh/Documents/tests/advancedcalc/Token.cpp"
+},
+{
+  "directory": "/Users/hugh/Documents/tests/advancedcalc/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk -std=gnu++20 -o CMakeFiles/advancedcalc.dir/Parser.cpp.o -c /Users/hugh/Documents/tests/advancedcalc/Parser.cpp",
+  "file": "/Users/hugh/Documents/tests/advancedcalc/Parser.cpp"
+},
+{
+  "directory": "/Users/hugh/Documents/tests/advancedcalc/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk -std=gnu++20 -o CMakeFiles/advancedcalc.dir/Lexer.cpp.o -c /Users/hugh/Documents/tests/advancedcalc/Lexer.cpp",
+  "file": "/Users/hugh/Documents/tests/advancedcalc/Lexer.cpp"
+},
+{
+  "directory": "/Users/hugh/Documents/tests/advancedcalc/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk -std=gnu++20 -o CMakeFiles/advancedcalc.dir/TokenList.cpp.o -c /Users/hugh/Documents/tests/advancedcalc/TokenList.cpp",
+  "file": "/Users/hugh/Documents/tests/advancedcalc/TokenList.cpp"
+},
+{
+  "directory": "/Users/hugh/Documents/tests/advancedcalc/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk -std=gnu++20 -o CMakeFiles/advancedcalc.dir/Constants.cpp.o -c /Users/hugh/Documents/tests/advancedcalc/Constants.cpp",
+  "file": "/Users/hugh/Documents/tests/advancedcalc/Constants.cpp"
+},
+{
+  "directory": "/Users/hugh/Documents/tests/advancedcalc/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk -std=gnu++20 -o CMakeFiles/advancedcalc.dir/Helper.cpp.o -c /Users/hugh/Documents/tests/advancedcalc/Helper.cpp",
+  "file": "/Users/hugh/Documents/tests/advancedcalc/Helper.cpp"
+},
+{
+  "directory": "/Users/hugh/Documents/tests/advancedcalc/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk -std=gnu++20 -o CMakeFiles/advancedcalc.dir/Functions.cpp.o -c /Users/hugh/Documents/tests/advancedcalc/Functions.cpp",
+  "file": "/Users/hugh/Documents/tests/advancedcalc/Functions.cpp"
+}
+]
