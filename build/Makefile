@@ -177,6 +177,30 @@ Constants.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/advancedcalc.dir/build.make CMakeFiles/advancedcalc.dir/Constants.cpp.s
 .PHONY : Constants.cpp.s
 
+Font.o: Font.cpp.o
+.PHONY : Font.o
+
+# target to build an object file
+Font.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/advancedcalc.dir/build.make CMakeFiles/advancedcalc.dir/Font.cpp.o
+.PHONY : Font.cpp.o
+
+Font.i: Font.cpp.i
+.PHONY : Font.i
+
+# target to preprocess a source file
+Font.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/advancedcalc.dir/build.make CMakeFiles/advancedcalc.dir/Font.cpp.i
+.PHONY : Font.cpp.i
+
+Font.s: Font.cpp.s
+.PHONY : Font.s
+
+# target to generate assembly for a file
+Font.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/advancedcalc.dir/build.make CMakeFiles/advancedcalc.dir/Font.cpp.s
+.PHONY : Font.cpp.s
+
 Functions.o: Functions.cpp.o
 .PHONY : Functions.o
 
@@ -360,6 +384,9 @@ help:
 	@echo "... Constants.o"
 	@echo "... Constants.i"
 	@echo "... Constants.s"
+	@echo "... Font.o"
+	@echo "... Font.i"
+	@echo "... Font.s"
 	@echo "... Functions.o"
 	@echo "... Functions.i"
 	@echo "... Functions.s"

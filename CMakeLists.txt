@@ -13,4 +13,10 @@ add_executable(
     Constants.cpp
     Helper.cpp
     Functions.cpp
+    Font.cpp
 )
+target_link_directories(advancedcalc PUBLIC ./deps/AAGL/build ./deps/glfw/build/src)
+target_include_directories(advancedcalc PUBLIC ./deps/AAGL ./deps/glfw/include ./deps/glm ./include)
+
+target_link_libraries(advancedcalc PUBLIC glfw3 AAGL "-framework Cocoa" "-framework OpenGL" "-framework IOKit")
+target_compile_definitions(advancedcalc PUBLIC GL_SILENCE_DEPRECATION)

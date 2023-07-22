@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/advancedcalc.dir/Calculator.cpp.o.d"
   "CMakeFiles/advancedcalc.dir/Constants.cpp.o"
   "CMakeFiles/advancedcalc.dir/Constants.cpp.o.d"
+  "CMakeFiles/advancedcalc.dir/Font.cpp.o"
+  "CMakeFiles/advancedcalc.dir/Font.cpp.o.d"
   "CMakeFiles/advancedcalc.dir/Functions.cpp.o"
   "CMakeFiles/advancedcalc.dir/Functions.cpp.o.d"
   "CMakeFiles/advancedcalc.dir/Helper.cpp.o"

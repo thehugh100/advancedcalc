@@ -10,6 +10,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/hugh/Documents/tests/advancedcalc/Calculator.cpp" "CMakeFiles/advancedcalc.dir/Calculator.cpp.o" "gcc" "CMakeFiles/advancedcalc.dir/Calculator.cpp.o.d"
   "/Users/hugh/Documents/tests/advancedcalc/Constants.cpp" "CMakeFiles/advancedcalc.dir/Constants.cpp.o" "gcc" "CMakeFiles/advancedcalc.dir/Constants.cpp.o.d"
+  "/Users/hugh/Documents/tests/advancedcalc/Font.cpp" "CMakeFiles/advancedcalc.dir/Font.cpp.o" "gcc" "CMakeFiles/advancedcalc.dir/Font.cpp.o.d"
   "/Users/hugh/Documents/tests/advancedcalc/Functions.cpp" "CMakeFiles/advancedcalc.dir/Functions.cpp.o" "gcc" "CMakeFiles/advancedcalc.dir/Functions.cpp.o.d"
   "/Users/hugh/Documents/tests/advancedcalc/Helper.cpp" "CMakeFiles/advancedcalc.dir/Helper.cpp.o" "gcc" "CMakeFiles/advancedcalc.dir/Helper.cpp.o.d"
   "/Users/hugh/Documents/tests/advancedcalc/Lexer.cpp" "CMakeFiles/advancedcalc.dir/Lexer.cpp.o" "gcc" "CMakeFiles/advancedcalc.dir/Lexer.cpp.o.d"
