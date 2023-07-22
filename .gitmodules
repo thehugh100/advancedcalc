@@ -1,0 +1,3 @@
+[submodule "AAGL"]
+	path = AAGL
+	url = https://github.com/thehugh100/AAGL
