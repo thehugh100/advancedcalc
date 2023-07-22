@@ -1,0 +1,6 @@
+[submodule "deps/AAGL"]
+	path = deps/AAGL
+	url = https://github.com/thehugh100/AAGL
+[submodule "deps/glfw"]
+	path = deps/glfw
+	url = https://github.com/glfw/glfw
