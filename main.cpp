@@ -22,6 +22,7 @@
 void runTests() {
     Calculator calculator(false);
     const std::vector<std::pair<std::string, double>> testCases = {
+        {"sign(-pi)", -1},
         {"1+1", 2},
         {"1.5 + 1.5", 3},
         {"1.5 + -1.5", 0},
@@ -31,7 +32,7 @@ void runTests() {
         {"33-9+40-(30+15)", 19},
         {"TAU + PI + (-PI + -TAU)", 0.},
         {"max(1, max(1, 2))", 2.},
-        {"((1+1))", 2.}
+        {"((1+1))", 2.},
     };
 
     int passes = 0;
@@ -87,6 +88,7 @@ class InputEngine {
     public:
     InputEngine() :buffer("") {
         cursor = 0;
+        lastInput = 0;
     }
 
     void handleInput(unsigned int c) {
@@ -96,8 +98,7 @@ class InputEngine {
             buffer = buffer.insert(cursor, 1, (char)c);
         }
         cursor++;
-
-        // std::cout << "Cursor: " << cursor << std::endl << "String: " << buffer.length() << std::endl;
+        lastInput = glfwGetTime();
     }
 
     void handleBackspace() {
@@ -130,6 +131,7 @@ class InputEngine {
                 cursor = std::min((int)(buffer.length()), cursor);
             }
         }
+        lastInput = glfwGetTime();
     }
 
     static void charCallbackStatic(GLFWwindow* window, unsigned int codepoint) {
@@ -144,6 +146,7 @@ class InputEngine {
 
     int cursor;
     std::string buffer;
+    float lastInput;
 };
 
 int main() {
@@ -188,12 +191,15 @@ int main() {
     SDFFont* sdfFont12 = new SDFFont(graphics, "fonts/RobotoMono-Regular_22.json");
 
     Calculator calculator(false);
-
     while (!glfwWindowShouldClose(window)) {
+        float time = glfwGetTime();
         glClear(GL_COLOR_BUFFER_BIT);
 
         double result = calculator.calculateInput(inputEngine->buffer);
         glm::vec3 position = glm::vec3(6., 22., 0.);
+        glm::vec3 origPos = position;
+
+        float characterWidth = 0;
 
         for(auto &i : calculator.parsed->list) {
             float w = 0;
@@ -204,11 +210,24 @@ int main() {
                 i.getValue(),
                 w,
                 1,
-                0,
-                inputEngine->cursor
+                0
             );
+            characterWidth = w / i.getValue().length();
             position.x += w;
         }
+
+        bool cursorState = (sin(time * 5.) > 0.) || ((glfwGetTime() - inputEngine->lastInput) < .25);
+
+        float q = 0;
+        sdfFont12->renderTextSimple(
+            glm::ortho(0.f, width, height, 0.f, -0.1f, 0.1f), 
+            origPos + glm::vec3((characterWidth * inputEngine->cursor) - characterWidth * .5, 0., 0.), 
+            glm::vec3(1.) * glm::vec3(cursorState > 0. ? 1. : 0.), 
+            "|",
+            q,
+            1,
+            0
+        );
 
         std::ostringstream resultStream;
         
@@ -227,8 +246,7 @@ int main() {
             resultStream.str(),
             w,
             1,
-            0,
-            inputEngine->cursor
+            0
         );
 
         glfwSwapBuffers(window);

@@ -123,8 +123,7 @@ void SDFFont::renderTextSimple(
     std::string_view text, 
     float &computedWidth,
     float weight, 
-    float italics,
-    int cursorPos
+    float italics
 ) {  
     glUseProgram(shader->id);
     glUniform4fv(glGetUniformLocation(shader->id, "col"), 1, glm::value_ptr(col));

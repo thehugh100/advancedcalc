@@ -25,8 +25,7 @@ class SDFFont {
         std::string_view text, 
         float &computedWidth,
         float weight = 1.f, 
-        float italics = 0.f,
-        int cursorPos = -1
+        float italics = 0.f
     );
     SDFFont(
         Graphics* graphics, 

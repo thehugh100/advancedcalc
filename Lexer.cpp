@@ -110,7 +110,7 @@ bool Lexer::expandConstants(TokenList& tokenList) {
                 double multiplier = 1.;
 
                 if(Parser::isCharOperator(constantName[0])) { //handle -PI etc
-                    constantName = i.getValue().substr(1);
+                    constantName = constantName.substr(1);
                     multiplier = -1.;
                 }
 
