@@ -176,10 +176,10 @@ CMakeFiles/advancedcalc.dir/Calculator.cpp.o: ../Calculator.cpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/wctype.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/wctype.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/_types/_wctrans_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/string \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/iostream \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/ios \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__locale \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/string \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/mutex \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__mutex_base \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/system_error \
@@ -2569,6 +2569,7 @@ CMakeFiles/advancedcalc.dir/main.cpp.o: ../main.cpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__tree \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__node_handle \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/optional \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/sstream \
   ../include/glad/glad.h \
   ../include/KHR/khrplatform.h \
   ../deps/glfw/include/GLFW/glfw3.h \
@@ -2993,7 +2994,9 @@ CMakeFiles/advancedcalc.dir/main.cpp.o: ../main.cpp \
   ../deps/glm/glm/gtc/ulp.inl \
   ../deps/glm/glm/ext/scalar_ulp.hpp \
   ../deps/glm/glm/gtc/vec1.hpp \
-  ../Font.h
+  ../Font.h \
+  ../Token.h \
+  ../TokenList.h
 
 
 ../deps/glfw/include/GLFW/glfw3.h:
@@ -3566,8 +3569,6 @@ CMakeFiles/advancedcalc.dir/main.cpp.o: ../main.cpp \
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__mutex_base:
 
-/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__bit_reference:
-
 ../deps/glm/glm/detail/type_mat4x2.inl:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__locale:
@@ -3579,6 +3580,8 @@ CMakeFiles/advancedcalc.dir/main.cpp.o: ../main.cpp \
 /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/_ctermid.h:
 
 ../deps/glm/glm/ext/vector_float2_precision.hpp:
+
+/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__bit_reference:
 
 ../deps/glm/glm/gtc/epsilon.inl:
 

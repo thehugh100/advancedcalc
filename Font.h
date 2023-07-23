@@ -23,6 +23,7 @@ class SDFFont {
         glm::vec3 position, 
         glm::vec3 col, 
         std::string_view text, 
+        float &computedWidth,
         float weight = 1.f, 
         float italics = 0.f,
         int cursorPos = -1

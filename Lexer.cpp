@@ -22,6 +22,13 @@ bool Lexer::lexInput(TokenList& tokenList) {
     bool joiningIdentifier = 0;
     int parenthesisCount = 0;
 
+    original.list.erase(std::remove_if(original.list.begin(), original.list.end(),
+        [](const Token& token) {
+            return token.getType() == Token::TOKEN_WHITESPACE;
+        }),
+        original.list.end()
+    );
+
     for(auto &i : original.list) {
         if(joiningFunction) {
             if(i.isType(Token::TOKEN_OPEN_PARENTHESIS)) {

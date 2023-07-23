@@ -121,6 +121,7 @@ void SDFFont::renderTextSimple(
     glm::vec3 position, 
     glm::vec3 col, 
     std::string_view text, 
+    float &computedWidth,
     float weight, 
     float italics,
     int cursorPos
@@ -149,20 +150,20 @@ void SDFFont::renderTextSimple(
 
         cursor++;
     }
-
-    if(cursorPos != -1) {
-        auto ch = atlasEntries['|'];
-        float adv = ch.fontMetrics.z / 64.;
-        glm::mat4 view = glm::translate(glm::identity<glm::mat4>(), originPos + glm::vec3((cursorPos * adv) - adv * .5, 0., 0.));
-        glUniformMatrix4fv(glGetUniformLocation(shader->id, "mvp"), 1, false, glm::value_ptr(
-            projection * 
-            view * 
-            glm::shear(ch.model, glm::vec3(0.f, 0.f, 0), glm::vec2(-italics * .25, 0), glm::vec2(0.0f, 0), glm::vec2(0))
-        ));
-        glUniform4fv(glGetUniformLocation(shader->id, "atlasMetrics"), 1, glm::value_ptr(ch.atlasMetrics));
-        glUniform1fv(glGetUniformLocation(shader->id, "weight"), 1, &weight);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, mesh->indexCount);
-    }
+    computedWidth = position.x - originPos.x;
+    // if(cursorPos != -1) {
+    //     auto ch = atlasEntries['|'];
+    //     float adv = ch.fontMetrics.z / 64.;
+    //     glm::mat4 view = glm::translate(glm::identity<glm::mat4>(), originPos + glm::vec3((cursorPos * adv) - adv * .5, 0., 0.));
+    //     glUniformMatrix4fv(glGetUniformLocation(shader->id, "mvp"), 1, false, glm::value_ptr(
+    //         projection * 
+    //         view * 
+    //         glm::shear(ch.model, glm::vec3(0.f, 0.f, 0), glm::vec2(-italics * .25, 0), glm::vec2(0.0f, 0), glm::vec2(0))
+    //     ));
+    //     glUniform4fv(glGetUniformLocation(shader->id, "atlasMetrics"), 1, glm::value_ptr(ch.atlasMetrics));
+    //     glUniform1fv(glGetUniformLocation(shader->id, "weight"), 1, &weight);
+    //     glDrawArrays(GL_TRIANGLE_STRIP, 0, mesh->indexCount);
+    // }
 }
 
 SDFFont::SDFFont(

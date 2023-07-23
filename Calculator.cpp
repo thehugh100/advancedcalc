@@ -13,6 +13,9 @@
 #include "Functions.h"
 
 Calculator::Calculator(bool debug) : debug(debug) {
+    parsed = new TokenList();
+    validResult = true;
+    error = "";
 }
 
 int Calculator::getPrecedence(std::string_view in) {
@@ -124,7 +127,7 @@ double Calculator::computeFunctionResult(const Token func) {
             }
             return func.first(params);
         } else {
-            throw std::runtime_error("Too " + (parameters.size() >= func.second ? std::string("Few") : std::string("Many")) + " parameters.");
+            throw std::runtime_error("Too " + (parameters.size() >= func.second ? std::string("Many") : std::string("Few")) + " parameters.");
         }
     } else {
         throw std::runtime_error("Unknown function " + identifier.getValue());
@@ -141,7 +144,13 @@ double Calculator::computeResult(const TokenList& outputQueue) {
         std::string tokenValue = token.getValue();
 
         if (tokenType == Token::TOKEN_NUMBER) {
-            operandStack.push(std::stod(tokenValue));
+            try {
+                operandStack.push(std::stod(tokenValue));
+            } catch(std::invalid_argument &e) {
+                error = "Invalid number";
+                validResult = false;
+                return 0;
+            }
         } else if (tokenType == Token::TOKEN_FUNCTION) {
             operandStack.push(computeFunctionResult(token));
         } else if (tokenType == Token::TOKEN_OPERATOR) {
@@ -189,8 +198,17 @@ double Calculator::processTokens(TokenList& list) {
         list.print();
     }
 
-    TokenList shuntedList = performShuntingYard(list);
-    
+    TokenList shuntedList;
+    try {
+        shuntedList = performShuntingYard(list);
+    } catch (std::runtime_error &e) {
+        if(debug)
+            std::cout << "performShuntingYard() Error: " << e.what() << std::endl;
+
+        validResult = false;
+        error = e.what();
+    }
+
     if(debug) {
         std::cout << "---Shunted---" << std::endl;
         shuntedList.print();
@@ -200,16 +218,29 @@ double Calculator::processTokens(TokenList& list) {
     try {
         result = computeResult(shuntedList);
     } catch (std::runtime_error &e) {
-        std::cout << "computeResult() Error: " << e.what() << std::endl;
+        if(debug)
+            std::cout << "computeResult() Error: " << e.what() << std::endl;
+
+        validResult = false;
+        error = e.what();
     }
 
     return result;
 }
 
 double Calculator::calculateInput(std::string_view input) {
+    validResult = true;
+    error = false;
+
     TokenList parsedInput;
     Parser parser;
     parser.parseInput(input, parsedInput);
+
+    parsed->list.clear();
+    for(auto&i : parsedInput.list) {
+        parsed->list.push_back(i);
+    }
+
     if(debug) {
         std::cout << "---Input---" << std::endl;
         parsedInput.print();
@@ -220,4 +251,12 @@ double Calculator::calculateInput(std::string_view input) {
 
 void Calculator::setDebug(bool nDebug) {
     debug = nDebug;
+}
+
+bool Calculator::resultIsValid() {
+    return validResult;
+}
+
+std::string_view Calculator::getError() {
+    return error;
 }

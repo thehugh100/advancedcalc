@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string_view>
+#include <string>
 
 class Token;
 class TokenList;
@@ -18,6 +19,13 @@ public:
     double processTokens(TokenList& list);
     double calculateInput(std::string_view input);
     void setDebug(bool nDebug);
+
+    bool resultIsValid();
+    std::string_view getError();
+
+    TokenList* parsed;
 private:
     bool debug;
+    bool validResult;
+    std::string error;
 };

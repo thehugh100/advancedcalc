@@ -102,7 +102,7 @@ bool Parser::parseInput(std::string_view input, TokenList& tokenList) {
         }
 
         if(tokenType != lastTokenType) {
-            if(lastTokenType != Token::TOKEN_WHITESPACE && lastTokenType != Token::TOKEN_NULL) {
+            if(lastTokenType != Token::TOKEN_NULL) {
                 tokenList.list.push_back({lastTokenType, buf});
             }
             buf = "";
@@ -113,7 +113,7 @@ bool Parser::parseInput(std::string_view input, TokenList& tokenList) {
     }
 
     if(buf != "") {
-        if(lastTokenType != Token::TOKEN_WHITESPACE && lastTokenType != Token::TOKEN_NULL) {
+        if(lastTokenType != Token::TOKEN_NULL) {
             tokenList.list.push_back({lastTokenType, buf});
         }
     }

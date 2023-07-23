@@ -177,10 +177,10 @@ CMakeFiles/advancedcalc.dir/Calculator.cpp.o
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/wctype.h
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/wctype.h
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/_types/_wctrans_t.h
+ /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/string
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/iostream
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/ios
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__locale
- /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/string
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/mutex
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__mutex_base
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/system_error
@@ -2579,6 +2579,7 @@ CMakeFiles/advancedcalc.dir/main.cpp.o
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__tree
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__node_handle
  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/optional
+ /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/sstream
  /Users/hugh/Documents/tests/advancedcalc/include/glad/glad.h
  /Users/hugh/Documents/tests/advancedcalc/include/KHR/khrplatform.h
  /Users/hugh/Documents/tests/advancedcalc/deps/glfw/include/GLFW/glfw3.h
@@ -3004,4 +3005,6 @@ CMakeFiles/advancedcalc.dir/main.cpp.o
  /Users/hugh/Documents/tests/advancedcalc/deps/glm/glm/ext/scalar_ulp.hpp
  /Users/hugh/Documents/tests/advancedcalc/deps/glm/glm/gtc/vec1.hpp
  /Users/hugh/Documents/tests/advancedcalc/Font.h
+ /Users/hugh/Documents/tests/advancedcalc/Token.h
+ /Users/hugh/Documents/tests/advancedcalc/TokenList.h
 

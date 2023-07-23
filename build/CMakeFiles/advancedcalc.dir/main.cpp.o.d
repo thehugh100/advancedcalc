@@ -241,6 +241,7 @@ CMakeFiles/advancedcalc.dir/main.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__tree \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/__node_handle \
   /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/optional \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/include/c++/v1/sstream \
   /Users/hugh/Documents/tests/advancedcalc/./include/glad/glad.h \
   /Users/hugh/Documents/tests/advancedcalc/./include/KHR/khrplatform.h \
   /Users/hugh/Documents/tests/advancedcalc/./deps/glfw/include/GLFW/glfw3.h \
@@ -665,4 +666,6 @@ CMakeFiles/advancedcalc.dir/main.cpp.o: \
   /Users/hugh/Documents/tests/advancedcalc/./deps/glm/glm/ext/../gtc/ulp.inl \
   /Users/hugh/Documents/tests/advancedcalc/./deps/glm/glm/ext/../gtc/../ext/scalar_ulp.hpp \
   /Users/hugh/Documents/tests/advancedcalc/./deps/glm/glm/ext/../detail/.././gtc/vec1.hpp \
-  /Users/hugh/Documents/tests/advancedcalc/Font.h
+  /Users/hugh/Documents/tests/advancedcalc/Font.h \
+  /Users/hugh/Documents/tests/advancedcalc/Token.h \
+  /Users/hugh/Documents/tests/advancedcalc/TokenList.h

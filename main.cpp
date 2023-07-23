@@ -5,6 +5,8 @@
 #include <vector>
 #include <stack>
 #include <map>
+#include <sstream>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "Calculator.h"
@@ -13,6 +15,9 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include "Font.h"
+
+#include "Token.h"
+#include "TokenList.h"
 
 void runTests() {
     Calculator calculator(false);
@@ -92,7 +97,7 @@ class InputEngine {
         }
         cursor++;
 
-        std::cout << "Cursor: " << cursor << std::endl << "String: " << buffer.length() << std::endl;
+        // std::cout << "Cursor: " << cursor << std::endl << "String: " << buffer.length() << std::endl;
     }
 
     void handleBackspace() {
@@ -160,18 +165,67 @@ int main() {
     // glEnable(GL_DEPTH_TEST);
     // glDepthFunc (GL_LESS);
     // glEnable(GL_CULL_FACE);
+    
+    glm::vec3 num = glm::vec3(0., 255., 188) / glm::vec3(256.);
+    glm::vec3 identifer = glm::vec3(251, 243, 0) / glm::vec3(256.);
+    glm::vec3 oper = glm::vec3(184, 184, 184) / glm::vec3(256.);
+    glm::vec3 parenths = glm::vec3(160, 160, 160) / glm::vec3(256.);
+
+    const std::map<int, glm::vec3> tokenColours = {
+        {Token::TOKEN_NUMBER, num},
+        {Token::TOKEN_OPERATOR, oper},
+        {Token::TOKEN_WHITESPACE, glm::vec3(1., 1., 1.)},
+        {Token::TOKEN_OPEN_PARENTHESIS, parenths},
+        {Token::TOKEN_CLOSE_PARENTHESIS, parenths},
+        {Token::TOKEN_COMMA, parenths},
+        {Token::TOKEN_IDENTIFIER, identifer},
+        {Token::TOKEN_FUNCTION, identifer},
+        {Token::TOKEN_NULL, glm::vec3(1., 1., 1.)},
+        {Token::TOKEN_UNKNOWN, glm::vec3(.5)},
+    };
 
     Graphics* graphics = new Graphics("assets/");
     SDFFont* sdfFont12 = new SDFFont(graphics, "fonts/RobotoMono-Regular_22.json");
 
+    Calculator calculator(false);
+
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);
 
+        double result = calculator.calculateInput(inputEngine->buffer);
+        glm::vec3 position = glm::vec3(6., 22., 0.);
+
+        for(auto &i : calculator.parsed->list) {
+            float w = 0;
+            sdfFont12->renderTextSimple(
+                glm::ortho(0.f, width, height, 0.f, -0.1f, 0.1f), 
+                position, 
+                tokenColours.at(i.getType()), 
+                i.getValue(),
+                w,
+                1,
+                0,
+                inputEngine->cursor
+            );
+            position.x += w;
+        }
+
+        std::ostringstream resultStream;
+        
+        if(calculator.resultIsValid()) {
+            resultStream << " = " << std::to_string(result);
+        } else {
+            resultStream << " - " << calculator.getError();
+        }
+
+        float w = 0;
+
         sdfFont12->renderTextSimple(
             glm::ortho(0.f, width, height, 0.f, -0.1f, 0.1f), 
-            glm::vec3(6., 22., 0.), 
-            glm::vec3(1.), 
-            inputEngine->buffer,
+            position, 
+            glm::vec3(.8), 
+            resultStream.str(),
+            w,
             1,
             0,
             inputEngine->cursor
