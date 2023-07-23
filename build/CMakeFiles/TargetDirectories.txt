@@ -1,3 +1,0 @@
-/Users/hugh/Documents/tests/advancedcalc/build/CMakeFiles/advancedcalc.dir
-/Users/hugh/Documents/tests/advancedcalc/build/CMakeFiles/edit_cache.dir
-/Users/hugh/Documents/tests/advancedcalc/build/CMakeFiles/rebuild_cache.dir
