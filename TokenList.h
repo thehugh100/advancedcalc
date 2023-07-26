@@ -9,4 +9,5 @@ class TokenList {
 
     void print();
     void printShort();
+    std::string toString();
 };

@@ -7,7 +7,11 @@
 #include "Constants.h"
 #include "Helper.h"
 
-Lexer::Lexer() {
+#include "Calculator.h"
+#include "CalcError.h"
+#include <iostream>
+
+Lexer::Lexer(Calculator* calculator) : calculator(calculator) {
 }
 
 bool Lexer::lexInput(TokenList& tokenList) {
@@ -22,14 +26,17 @@ bool Lexer::lexInput(TokenList& tokenList) {
     bool joiningIdentifier = 0;
     int parenthesisCount = 0;
 
-    original.list.erase(std::remove_if(original.list.begin(), original.list.end(),
-        [](const Token& token) {
-            return token.getType() == Token::TOKEN_WHITESPACE;
-        }),
-        original.list.end()
-    );
+    // original.list.erase(std::remove_if(original.list.begin(), original.list.end(),
+    //     [](const Token& token) {
+    //         return token.getType() == Token::TOKEN_WHITESPACE;
+    //     }),
+    //     original.list.end()
+    // );
 
     for(auto &i : original.list) {
+        if(i.isType(Token::TOKEN_WHITESPACE) && !joiningFunction) {
+            continue;
+        }
         if(joiningFunction) {
             if(i.isType(Token::TOKEN_OPEN_PARENTHESIS)) {
                 parenthesisCount++;
@@ -60,7 +67,10 @@ bool Lexer::lexInput(TokenList& tokenList) {
         if(!i.isType(Token::TOKEN_OPEN_PARENTHESIS) && lastToken.isType(Token::TOKEN_IDENTIFIER)) {
             joiningIdentifier = false;
             Token func = {Token::TOKEN_IDENTIFIER, buf};
-            tokenList.list.push_back(func);
+
+            if(buf != "")
+                tokenList.list.push_back(func);
+                
             lastToken = func;
             buf = "";
         }
@@ -96,7 +106,21 @@ bool Lexer::lexInput(TokenList& tokenList) {
         tokenList.list.push_back({Token::TOKEN_IDENTIFIER, buf});
     }
 
-    return expandConstants(tokenList);
+    expandConstants(tokenList);
+    
+    lastToken = {Token::TOKEN_NULL, ""};
+    for(auto &i : tokenList.list) {
+        if(i.isType(Token::TOKEN_OPERATOR) && lastToken.isType(Token::TOKEN_OPERATOR)) {
+            calculator->reportError(new CalcError(i, "Unexpected operator"));
+        }
+        if(i.isType(Token::TOKEN_NUMBER) && lastToken.isType(Token::TOKEN_NUMBER)) {
+            calculator->reportError(new CalcError(i, "Unexpected number"));
+        }
+        lastToken = i;
+    }
+
+
+    return true;
 }
 
 bool Lexer::expandConstants(TokenList& tokenList) {
@@ -110,8 +134,10 @@ bool Lexer::expandConstants(TokenList& tokenList) {
                 double multiplier = 1.;
 
                 if(Parser::isCharOperator(constantName[0])) { //handle -PI etc
+                    if(constantName[0] == '-') {
+                        multiplier = -1.;
+                    }
                     constantName = constantName.substr(1);
-                    multiplier = -1.;
                 }
 
                 if(Constants::exists(constantName)) {

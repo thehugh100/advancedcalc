@@ -15,3 +15,11 @@ void TokenList::printShort() {
     }
     std::cout << std::endl;
 }
+
+std::string TokenList::toString() {
+    std::string str = "";
+    for(auto &i : list) {
+        str += i.getValue();
+    }
+    return str;
+}

@@ -14,6 +14,7 @@ add_executable(
     Helper.cpp
     Functions.cpp
     Font.cpp
+    CalcError.cpp
 )
 target_link_directories(advancedcalc PUBLIC ./deps/AAGL/build ./deps/glfw/build/src)
 target_include_directories(advancedcalc PUBLIC ./deps/AAGL ./deps/glfw/include ./deps/glm ./include)

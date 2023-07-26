@@ -10,6 +10,10 @@ Functions::FunctionCallDefinition_t Functions::get(std::string name) {
     return functions.at(name);
 }
 
+Functions::FunctionList_t Functions::getFunctions() {
+    return functions;
+}
+
 Functions::FunctionList_t Functions::functions = {
     {"max",
         {

@@ -66,6 +66,15 @@
         "tuple": "cpp",
         "type_traits": "cpp",
         "typeinfo": "cpp",
-        "unordered_map": "cpp"
+        "unordered_map": "cpp",
+        "any": "cpp",
+        "compare": "cpp",
+        "forward_list": "cpp",
+        "fstream": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "set": "cpp",
+        "unordered_set": "cpp",
+        "valarray": "cpp"
     }
 }

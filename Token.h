@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <glm/glm.hpp>
 
 class Token;
 
@@ -16,13 +17,23 @@ public:
 
     int getType() const;
     void setType(int nType);
-
+    const bool isParenthesis();
     const bool isType(int v);
+    bool isResolved();
+    bool isValidOperator();
+    glm::vec3 getColor();
+    
+    void setDepth(int nDepth);
+    int getDepth() const;
+
+    void setPairId(int nPairId);
+    int getPairId() const;
 
     std::string_view getName() const;
 
     enum Type {
         TOKEN_NULL = 0,
+        TOKEN_EXPRESSION,
         TOKEN_WHITESPACE,
         TOKEN_NUMBER,
         TOKEN_OPERATOR,
@@ -35,6 +46,8 @@ public:
     };
 private:
     int type;
+    int depth;
+    int pairId;
     std::string value;
     static const std::map<int, std::string> tokenNames;
 };

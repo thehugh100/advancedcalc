@@ -6,7 +6,7 @@
 #include <stack>
 #include <map>
 #include <sstream>
-
+#include <memory>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "Calculator.h"
@@ -18,11 +18,13 @@
 
 #include "Token.h"
 #include "TokenList.h"
+#include "CalcError.h"
+#include "Functions.h"
 
 void runTests() {
-    Calculator calculator(false);
+    auto calculator = std::make_shared<Calculator>(false);
+
     const std::vector<std::pair<std::string, double>> testCases = {
-        {"sign(-pi)", -1},
         {"1+1", 2},
         {"1.5 + 1.5", 3},
         {"1.5 + -1.5", 0},
@@ -33,16 +35,19 @@ void runTests() {
         {"TAU + PI + (-PI + -TAU)", 0.},
         {"max(1, max(1, 2))", 2.},
         {"((1+1))", 2.},
+        {"+pi", M_PI},
+        {"-pi - -pi", 0},
+        {"sign(-pi)", -1},
     };
 
     int passes = 0;
     for(auto &i : testCases) {
-        double result = calculator.calculateInput(i.first);
-        if(result != i.second) {
+        double result = calculator->calculateInput(i.first);
+        if(result != i.second || !calculator->resultIsValid()) {
             std::cout << "Test case failed: '" << i.first << "', expected: " << i.second << ", got: " << result << std::endl;
-            calculator.setDebug(true);
-            calculator.calculateInput(i.first);
-            calculator.setDebug(false);
+            calculator->setDebug(true);
+            calculator->calculateInput(i.first);
+            calculator->setDebug(false);
         } else {
             passes++;
         }
@@ -66,7 +71,7 @@ GLFWwindow* createWindow(float w, float h) {
     //glfwWindowHint(GLFW_DECORATED, false);
     //glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, true);
 
-    window = glfwCreateWindow(w, h, "test", NULL, NULL);
+    window = glfwCreateWindow(w, h, "Advanced Calculator", NULL, NULL);
 
     if (!window) {
         glfwTerminate();
@@ -89,6 +94,32 @@ class InputEngine {
     InputEngine() :buffer("") {
         cursor = 0;
         lastInput = 0;
+        calculator = new Calculator(false);
+        result = 0;
+        hasSuggestions = false;
+        tokenStartOffset = 0;
+        tokenEndOffset = 0;
+        cursorDepth = 0;
+        cursorPairDepth = -1;
+    }
+
+    void validateCursor() {
+        cursor = std::max(0, cursor);
+        cursor = std::min((int)(buffer.length()), cursor);
+
+        cursorPairDepth = -1;
+
+        int characterRunningCount = 0;
+        for(auto &i : calculator->parsed->list) {
+            if(cursor >= characterRunningCount && cursor <= characterRunningCount + i.getValue().length()) {
+                cursorDepth = i.getDepth();
+                if(cursorDepth != 0) {
+                    cursorPairDepth = i.getPairId();
+                }
+                break;
+            }
+            characterRunningCount += i.getValue().length();
+        }
     }
 
     void handleInput(unsigned int c) {
@@ -99,6 +130,7 @@ class InputEngine {
         }
         cursor++;
         lastInput = glfwGetTime();
+        validateCursor();
     }
 
     void handleBackspace() {
@@ -115,6 +147,7 @@ class InputEngine {
                 }
             }
         }
+        validateCursor();
     }
 
     void handleControl(int key, int scancode, int action, int mods) {
@@ -122,16 +155,59 @@ class InputEngine {
             if(key == GLFW_KEY_BACKSPACE) {
                 handleBackspace();
             }
+
+            if(key == GLFW_KEY_DOWN) {
+                if(hasSuggestions) {
+                    suggestionsCursor++;
+                    suggestionsCursor = std::min((int)(suggestions.size() - 1), suggestionsCursor);
+                }
+            }
+
+            if(key == GLFW_KEY_UP) {
+                if(hasSuggestions) {
+                    suggestionsCursor--;
+                    suggestionsCursor = std::max(0, suggestionsCursor);
+                }
+            }
+
+            if(key == GLFW_KEY_TAB) {
+                if(hasSuggestions) {
+                    int suggestionWidth = tokenEndOffset - tokenStartOffset;
+                    buffer.erase(tokenStartOffset, suggestionWidth);
+                    cursor = tokenStartOffset;
+                    if(suggestionsCursor < suggestions.size()) {
+                        buffer = buffer.insert(cursor, suggestions[suggestionsCursor]);
+                        cursor += suggestions[suggestionsCursor].length();
+                    }
+                    resetSuggestions();
+                }
+            }
+
             if(key == GLFW_KEY_LEFT) {
-                cursor--;
+                if(mods == GLFW_MOD_SUPER) {
+                    cursor = 0;
+                } else if(mods == GLFW_MOD_ALT) {
+  
+                } else {
+                    cursor--;
+                }
+
                 cursor = std::max(0, cursor);
             }
             if(key == GLFW_KEY_RIGHT) {
-                cursor++;
+                if(mods == GLFW_MOD_SUPER) {
+                    cursor = buffer.length();
+                } else if(mods == GLFW_MOD_ALT) {
+
+                } else {
+                    cursor++;
+                }
+
                 cursor = std::min((int)(buffer.length()), cursor);
             }
         }
         lastInput = glfwGetTime();
+        validateCursor();
     }
 
     static void charCallbackStatic(GLFWwindow* window, unsigned int codepoint) {
@@ -144,9 +220,58 @@ class InputEngine {
         instance->handleControl(key, scancode, action, mods);
     }
 
+    std::vector<std::string> getSuggestions() {
+        return suggestions;
+    }
+
+    void resetSuggestions() {
+        suggestions.clear();
+        suggestionsCursor = 0;
+    }
+
+    void tick() {
+        result = calculator->calculateInput(buffer);
+
+        // std::cout << calculator->resultIsValid() << std::endl;
+
+        int characterRunningCount = 0;
+        hasSuggestions = false;
+        for(auto &i : calculator->parsed->list) {
+            if(i.isType(Token::TOKEN_IDENTIFIER) && !i.isResolved()) {
+                if(cursor >= characterRunningCount && cursor <= characterRunningCount + i.getValue().length()) {
+                    suggestions = calculator->getSuggestions(i.getValue());
+                    if(suggestions.size() > 0) {
+                        hasSuggestions = true;
+                        tokenStartOffset = characterRunningCount;
+                        tokenEndOffset = characterRunningCount + i.getValue().length();
+                        break;
+                    }
+                }
+            }
+            characterRunningCount += i.getValue().length();
+        }
+
+        if(!hasSuggestions) {
+            resetSuggestions();
+        }
+    }
+
+    double getResult() {
+        return result;
+    }
+
+    double result;
+    int suggestionsCursor = 0;
     int cursor;
     std::string buffer;
     float lastInput;
+    Calculator *calculator;
+    int tokenStartOffset;
+    int tokenEndOffset;
+    std::vector<std::string> suggestions;
+    bool hasSuggestions;
+    int cursorDepth;
+    int cursorPairDepth;
 };
 
 int main() {
@@ -160,6 +285,7 @@ int main() {
     }
 
     InputEngine* inputEngine = new InputEngine();
+    
     glfwSetWindowUserPointer(window, inputEngine);
     glfwSetCharCallback(window, InputEngine::charCallbackStatic);
     glfwSetKeyCallback(window, InputEngine::keyCallbackStatic);
@@ -168,86 +294,139 @@ int main() {
     // glEnable(GL_DEPTH_TEST);
     // glDepthFunc (GL_LESS);
     // glEnable(GL_CULL_FACE);
-    
-    glm::vec3 num = glm::vec3(0., 255., 188) / glm::vec3(256.);
-    glm::vec3 identifer = glm::vec3(251, 243, 0) / glm::vec3(256.);
-    glm::vec3 oper = glm::vec3(184, 184, 184) / glm::vec3(256.);
-    glm::vec3 parenths = glm::vec3(160, 160, 160) / glm::vec3(256.);
-
-    const std::map<int, glm::vec3> tokenColours = {
-        {Token::TOKEN_NUMBER, num},
-        {Token::TOKEN_OPERATOR, oper},
-        {Token::TOKEN_WHITESPACE, glm::vec3(1., 1., 1.)},
-        {Token::TOKEN_OPEN_PARENTHESIS, parenths},
-        {Token::TOKEN_CLOSE_PARENTHESIS, parenths},
-        {Token::TOKEN_COMMA, parenths},
-        {Token::TOKEN_IDENTIFIER, identifer},
-        {Token::TOKEN_FUNCTION, identifer},
-        {Token::TOKEN_NULL, glm::vec3(1., 1., 1.)},
-        {Token::TOKEN_UNKNOWN, glm::vec3(.5)},
-    };
 
     Graphics* graphics = new Graphics("assets/");
     SDFFont* sdfFont12 = new SDFFont(graphics, "fonts/RobotoMono-Regular_22.json");
+    sdfFont12->setProjectionMatrix(glm::ortho(0.f, width, height, 0.f, -0.1f, 0.1f));
 
-    Calculator calculator(false);
+    glClearColor(0.05, 0.05, 0.05, 1.0);
+
     while (!glfwWindowShouldClose(window)) {
+        if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            inputEngine->calculator->setDebug(true);
+            inputEngine->calculator->calculateInput(inputEngine->buffer);
+            glfwSetWindowShouldClose(window, true);
+            break;
+        }
+
         float time = glfwGetTime();
         glClear(GL_COLOR_BUFFER_BIT);
 
-        double result = calculator.calculateInput(inputEngine->buffer);
+        inputEngine->tick();
+        double result = inputEngine->getResult();
+
         glm::vec3 position = glm::vec3(6., 22., 0.);
         glm::vec3 origPos = position;
 
         float characterWidth = 0;
+        bool showErrors = true;
 
-        for(auto &i : calculator.parsed->list) {
+        int characterRunningCount = 0;
+        for(auto &i : inputEngine->calculator->parsed->list) {
             float w = 0;
             sdfFont12->renderTextSimple(
-                glm::ortho(0.f, width, height, 0.f, -0.1f, 0.1f), 
-                position, 
-                tokenColours.at(i.getType()), 
+                position,
+                i.getColor(), 
                 i.getValue(),
                 w,
-                1,
+                (i.isParenthesis() && i.getPairId() == inputEngine->cursorPairDepth) ? 0.97 : 1,
                 0
             );
             characterWidth = w / i.getValue().length();
             position.x += w;
+            characterRunningCount += i.getValue().length();
         }
 
         bool cursorState = (sin(time * 5.) > 0.) || ((glfwGetTime() - inputEngine->lastInput) < .25);
 
         float q = 0;
         sdfFont12->renderTextSimple(
-            glm::ortho(0.f, width, height, 0.f, -0.1f, 0.1f), 
             origPos + glm::vec3((characterWidth * inputEngine->cursor) - characterWidth * .5, 0., 0.), 
-            glm::vec3(1.) * glm::vec3(cursorState > 0. ? 1. : 0.), 
+            glm::vec3(1.) * glm::vec3(cursorState > 0. ? 1. : 0.05), 
             "|",
             q,
             1,
             0
         );
 
-        std::ostringstream resultStream;
-        
-        if(calculator.resultIsValid()) {
-            resultStream << " = " << std::to_string(result);
+        if(inputEngine->calculator->resultIsValid()) {
+            std::ostringstream resultStream;
+
+            resultStream << " = ";
+            if(result == (int)result) {
+                resultStream << (int)result;
+            } else {
+                resultStream << std::setprecision(std::numeric_limits<double>::digits10) << result;
+            }
+
+            float w = 0;
+            sdfFont12->renderTextSimple(
+                position, 
+                glm::vec3(.8), 
+                resultStream.str(),
+                w,
+                1,
+                0
+            );
         } else {
-            resultStream << " - " << calculator.getError();
+            if(inputEngine->buffer.length() > 0 && !inputEngine->hasSuggestions) {
+                auto errors = inputEngine->calculator->getErrors();
+                glm::vec3 position = origPos + glm::vec3(0., 22., 0.);
+                for(const auto &i : *errors) {
+                    float w = 0;
+                    sdfFont12->renderTextSimple(
+                        position, 
+                        i->getToken().getColor(), 
+                        i->getToken().getValue(),
+                        w,
+                        1,
+                        0
+                    );
+                    sdfFont12->renderTextSimple(
+                        position + glm::vec3(w + characterWidth, 0., 0.), 
+                        glm::vec3(.8), 
+                        i->getMessage(),
+                        w,
+                        1,
+                        0
+                    );
+                    position += glm::vec3(0., 22., 0.);
+                }
+            }
         }
 
-        float w = 0;
+        if(inputEngine->hasSuggestions) {
+            float yOff = 22;
+            auto suggestions = inputEngine->getSuggestions();
+            int index = 0;
+            for(auto &s : suggestions) {
+                showErrors = false;
+                float lq = 0;
+                sdfFont12->renderTextSimple(
+                    origPos + glm::vec3((characterWidth * (inputEngine->tokenStartOffset)), yOff, 0.), 
+                    glm::vec3(.8), 
+                    s,
+                    lq,
+                    1,
+                    0
+                );
 
-        sdfFont12->renderTextSimple(
-            glm::ortho(0.f, width, height, 0.f, -0.1f, 0.1f), 
-            position, 
-            glm::vec3(.8), 
-            resultStream.str(),
-            w,
-            1,
-            0
-        );
+                if(inputEngine->suggestionsCursor == index) {
+                    float w = 0;
+                    sdfFont12->renderTextSimple(
+                        origPos + glm::vec3((characterWidth * (inputEngine->tokenStartOffset + s.length())) + characterWidth * .5, yOff, 0.), 
+                        glm::vec3(1.), 
+                        "<",
+                        w,
+                        1,
+                        0
+                    );
+                }
+
+                yOff += 22;
+                index++;
+            }
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();

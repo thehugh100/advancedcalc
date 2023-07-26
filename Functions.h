@@ -14,6 +14,7 @@ class Functions {
     typedef std::pair<Function_t, int> FunctionCallDefinition_t;
     typedef const std::map<std::string, FunctionCallDefinition_t> FunctionList_t;
 
+    static FunctionList_t getFunctions();
     static bool exists(std::string name);
     static FunctionCallDefinition_t get(std::string name);
 

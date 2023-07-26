@@ -19,7 +19,6 @@ class SDFFont {
     void loadAtlas(std::filesystem::path path);
     void loadManifest(std::filesystem::path path);
     void renderTextSimple( 
-        glm::mat4 projection, 
         glm::vec3 position, 
         glm::vec3 col, 
         std::string_view text, 
@@ -33,6 +32,8 @@ class SDFFont {
     );
     ~SDFFont();
 
+    void setProjectionMatrix(glm::mat4 nProjectionMatrix);
+
     Mesh* mesh;
     Shader* shader;
     Graphics* graphics;
@@ -43,4 +44,7 @@ class SDFFont {
     float size;
     float fontSize;
     float retinaScale;
+    
+    private:
+    glm::mat4 projectionMatrix;
 };
