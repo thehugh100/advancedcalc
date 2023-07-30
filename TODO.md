@@ -4,7 +4,7 @@ Multiple expressions in a single instance
 
 Refernce the result of a previous expression
 
-Graphing if expression written in terms of x
+Graphing of expression written in terms of x
 
 Advanced keyboard input, ~~hilighting~~, alt/option + left/right, ~~clipboard~~, etc.
 
@@ -20,6 +20,8 @@ Better testing framework, ability to set tests expected to fail
 
 ~~auto closing brackets~~
 
+Auto sizing window
+
 AAGL errors
 
-Bitwise operators
+Bitwise operators, greater than and less than

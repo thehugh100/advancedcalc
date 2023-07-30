@@ -6,9 +6,10 @@
 typedef std::pair<char, int> Operator_t;
 
 class TokenList;
-
+class Calculator;
 class Parser {
 public:
+    Parser(Calculator* calculator);
     static bool isCharNumeric(char i);
     static bool isCharHex(char i);
     static bool isCharOperator(char i);
@@ -25,4 +26,6 @@ public:
     static const std::vector<Operator_t> operators;
 
     bool parseInput(std::string_view input, TokenList& tokenList);
+private:
+    Calculator* calculator;
 };

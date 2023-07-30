@@ -29,7 +29,7 @@ const bool Token::isParenthesis() {
     return isType(Token::TOKEN_OPEN_PARENTHESIS) || isType(Token::TOKEN_CLOSE_PARENTHESIS);
 }
 
-const bool Token::isType(int v) {
+bool Token::isType(int v) const {
     return v == type;
 }
 

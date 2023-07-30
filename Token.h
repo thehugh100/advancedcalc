@@ -18,7 +18,7 @@ public:
     int getType() const;
     void setType(int nType);
     const bool isParenthesis();
-    const bool isType(int v);
+    bool isType(int v) const;
 
     bool isConstantIdentifier() const;
     bool isFunctionIdentifier() const;

@@ -21,6 +21,7 @@
 #include "TokenList.h"
 #include "CalcError.h"
 #include "Functions.h"
+#include "Instruction.h"
 
 void runTests() {
     auto calculator = std::make_shared<Calculator>(false);
@@ -106,6 +107,8 @@ class InputEngine {
         selectIndexStart = 0;
         hasSelectedText = false;
         parenthesisBalance = 0;
+        lastInsertedChar = 0;
+        resultInvalid = true;
     }
 
     void validateCursor() {
@@ -128,12 +131,22 @@ class InputEngine {
     }
 
     void handleInput(unsigned int c) {
+        resultInvalid = true;
         validateTextSelection();
         if(hasSelectedText) {
             buffer.erase(selectIndexStart, selectIndexEnd - selectIndexStart);
             cursor = selectIndexStart;
             resetTextSelection();
             validateCursor();
+        }
+
+
+        if(c == ')' && parenthesisBalance == 0 && lastInsertedChar == '(') {
+            cursor++;
+            validateCursor();
+            checkBalance();
+            lastInsertedChar = c;
+            return;
         }
 
         if(cursor == buffer.length()) {
@@ -145,12 +158,18 @@ class InputEngine {
         cursor++;
 
         if(c == '(' && parenthesisBalance == 0) {
-            buffer += ')';
+            //buffer += ')';
+            if(cursor == buffer.length()) {
+                buffer += ')';
+            } else {
+                buffer = buffer.insert(cursor, 1, ')');
+            }
         }
 
         lastInput = glfwGetTime();
         validateCursor();
         checkBalance();
+        lastInsertedChar = c;
     }
 
     void handleBackspace() {
@@ -208,7 +227,7 @@ class InputEngine {
     }
 
     void handleControl(int key, int scancode, int action, int mods) {
-        
+        resultInvalid = true;
         if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
             //std::cout << "start text selection" << std::endl;
             startTextSelection();
@@ -360,8 +379,16 @@ class InputEngine {
     }
 
     void tick() {
-        result = calculator->calculateInput(buffer);
-
+        if(resultInvalid) {
+            calculator->calculateInput(buffer); //bad way to error check
+            if(calculator->resultIsValid()) {
+                calculator->compileInput(buffer);
+                result = calculator->executeInstructions();
+            } else {
+                result = 0;
+            }
+        }
+        
         // std::cout << calculator->resultIsValid() << std::endl;
 
         int characterRunningCount = 0;
@@ -409,6 +436,8 @@ class InputEngine {
     int selectIndexStart = 0;
     int hasSelectedText = false;
 
+    char lastInsertedChar = 0;
+    bool resultInvalid;
     GLFWwindow* window;
 };
 
@@ -448,6 +477,8 @@ int main() {
     Shape* selectRect = new Shape(graphics, graphics->findMesh("tlquad"));
     selectRect->col = glm::vec4(32., 145., 121., 255.) / glm::vec4(255.);
 
+    Shape* hintRect = new Shape(graphics, graphics->findMesh("tlquad"));
+    hintRect->col = glm::vec4(255., 255., 255., 32.) / glm::vec4(255.);
 
     sdfFont12->setProjectionMatrix(projection);
 
@@ -479,6 +510,11 @@ int main() {
 
         int characterRunningCount = 0;
         for(auto &i : inputEngine->calculator->parsed->list) {
+            if (i.isParenthesis() && i.getPairId() == inputEngine->cursorPairDepth) {
+                hintRect->view = quadMat(origPos.x + characterRunningCount * sdfFont12->getMonospaceAdvance(), origPos.y - 18., sdfFont12->getMonospaceAdvance(), 22.);
+                hintRect->render(projection);
+            }
+
             float w = 0;
             sdfFont12->renderTextSimple(
                 position,
@@ -580,6 +616,20 @@ int main() {
                 yOff += 22;
                 index++;
             }
+        }
+
+        float yOff = 100;
+        for(auto &i : inputEngine->calculator->compiledInstructions) {
+            float lq = 0;
+            sdfFont12->renderTextSimple(
+                origPos + glm::vec3(640, yOff, 0.), 
+                glm::vec4(.8, .8, .8, 1.),
+                i.toString(),
+                lq,
+                1,
+                0
+            );
+            yOff += 22;
         }
 
         glfwSwapBuffers(window);

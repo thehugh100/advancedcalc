@@ -1,6 +1,10 @@
 #include "Parser.h"
 #include "Token.h"
 #include "TokenList.h"
+#include "Calculator.h"
+
+Parser::Parser(Calculator* calculator) : calculator(calculator) {
+}
 
 bool Parser::isCharNumeric(char i) {
     return (i >= '0' && i <= '9') || i == '.';

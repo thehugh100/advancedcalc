@@ -6,18 +6,18 @@ bool Functions::exists(std::string name) {
     return functions.find(name) != functions.end();
 }
 
-Functions::FunctionCallDefinition_t Functions::get(std::string name) {
+FunctionCallDefinition_t Functions::get(std::string name) {
     return functions.at(name);
 }
 
-Functions::FunctionList_t Functions::getFunctions() {
+FunctionList_t Functions::getFunctions() {
     return functions;
 }
 
-Functions::FunctionList_t Functions::functions = {
+FunctionList_t Functions::functions = {
     {"max",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return std::max(params[0], params[1]);
             }, 
             2
@@ -25,7 +25,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"min",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return std::min(params[0], params[1]);
             }, 
             2
@@ -33,7 +33,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"saturate",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return std::max(0., std::min(1., params[0]));
             }, 
             1
@@ -41,7 +41,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"clamp",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return std::max(params[1], std::min(params[2], params[0]));
             }, 
             3
@@ -49,7 +49,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"sin",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return sin(params[0]);
             }, 
             1
@@ -57,7 +57,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"cos",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return cos(params[0]);
             }, 
             1
@@ -65,7 +65,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"tan",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return tan(params[0]);
             }, 
             1
@@ -73,7 +73,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"asin",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return asin(params[0]);
             }, 
             1
@@ -81,7 +81,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"acos",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return acos(params[0]);
             }, 
             1
@@ -89,7 +89,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"atan",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return atan(params[0]);
             }, 
             1
@@ -97,7 +97,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"atan2",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return atan2(params[0], params[1]);
             }, 
             2
@@ -105,7 +105,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"cosh",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return cosh(params[0]);
             }, 
             1
@@ -113,7 +113,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"tanh",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return tanh(params[0]);
             }, 
             1
@@ -121,7 +121,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"asinh",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return asinh(params[0]);
             }, 
             1
@@ -129,7 +129,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"acosh",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return acosh(params[0]);
             }, 
             1
@@ -137,7 +137,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"atanh",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return atanh(params[0]);
             }, 
             1
@@ -145,7 +145,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"sqrt",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return sqrt(params[0]);
             }, 
             1
@@ -153,7 +153,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"cbrt",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return cbrt(params[0]);
             }, 
             1
@@ -161,7 +161,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"rsqrt",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return pow(params[0], -0.5);
             }, 
             1
@@ -169,7 +169,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"abs",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return abs(params[0]);
             }, 
             1
@@ -177,7 +177,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"sign",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return std::copysign(1., params[0]);
             }, 
             1
@@ -185,7 +185,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"pow",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return pow(params[0], params[1]);
             }, 
             2
@@ -193,7 +193,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"exp",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return exp(params[0]);
             }, 
             1
@@ -201,7 +201,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"exp2",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return exp2(params[0]);
             }, 
             1
@@ -209,7 +209,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"exp10",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return pow(10, params[0]);
             }, 
             1
@@ -217,7 +217,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"log",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return log(params[0]);
             }, 
             1
@@ -225,7 +225,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"log2",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return log2(params[0]);
             }, 
             1
@@ -233,7 +233,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"log10",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return log10(params[0]);
             }, 
             1
@@ -241,7 +241,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"ceil",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return ceil(params[0]);
             }, 
             1
@@ -249,7 +249,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"floor",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return floor(params[0]);
             }, 
             1
@@ -257,7 +257,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"round",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return round(params[0]);
             }, 
             1
@@ -265,7 +265,7 @@ Functions::FunctionList_t Functions::functions = {
     },
     {"fract",
         {
-            [](Functions::ParameterList_t params) {
+            [](ParameterList_t params) {
                 return params[0] - floor(params[0]);
             }, 
             1
