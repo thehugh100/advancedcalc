@@ -33,8 +33,16 @@ const bool Token::isType(int v) {
     return v == type;
 }
 
-bool Token::isResolved() {
-    return Constants::exists(value) || Functions::exists(value);
+bool Token::isConstantIdentifier() const {
+    return Constants::exists(value);
+}
+
+bool Token::isFunctionIdentifier() const {
+    return Functions::exists(value);
+}
+
+bool Token::isResolved() const {
+    return isConstantIdentifier() || isFunctionIdentifier();
 }
 
 bool Token::isValidOperator() {
@@ -49,10 +57,12 @@ bool Token::isValidOperator() {
     return false;
 }
 
-glm::vec3 Token::getColor() {
+glm::vec4 Token::getColor() {
     glm::vec3 num = glm::vec3(0., 255., 188) / glm::vec3(256.);
     glm::vec3 identifer = glm::vec3(251, 243, 0) / glm::vec3(256.);
     glm::vec3 unresolved = glm::vec3(241, 170, 18) / glm::vec3(256.);
+    glm::vec3 constant = glm::vec3(174, 241, 18) / glm::vec3(256.);
+
     glm::vec3 oper = glm::vec3(184, 184, 184) / glm::vec3(256.);
     glm::vec3 parenths = glm::vec3(160, 160, 160) / glm::vec3(256.);
 
@@ -72,11 +82,15 @@ glm::vec3 Token::getColor() {
 
     glm::vec3 color = tokenColours.at(type);
 
-    if(isType(Token::TOKEN_IDENTIFIER) && !isResolved()) {
-        color = unresolved;
+    if(isType(Token::TOKEN_IDENTIFIER)) {
+        if(!isResolved()) {
+            color = unresolved;
+        } else if (isConstantIdentifier()) {
+            color = constant;
+        }
     }
 
-    return color;
+    return glm::vec4(color, 1.);
 }
 
 void Token::setDepth(int nDepth) {

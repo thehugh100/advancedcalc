@@ -12,6 +12,7 @@
 #include "Calculator.h"
 
 #include <AAGL/Graphics.h>
+#include <AAGL/Shape.h>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include "Font.h"
@@ -91,7 +92,7 @@ GLFWwindow* createWindow(float w, float h) {
 
 class InputEngine {
     public:
-    InputEngine() :buffer("") {
+    InputEngine(GLFWwindow* window) :buffer(""), window(window) {
         cursor = 0;
         lastInput = 0;
         calculator = new Calculator(false);
@@ -101,6 +102,10 @@ class InputEngine {
         tokenEndOffset = 0;
         cursorDepth = 0;
         cursorPairDepth = -1;
+        selectIndexEnd = 0;
+        selectIndexStart = 0;
+        hasSelectedText = false;
+        parenthesisBalance = 0;
     }
 
     void validateCursor() {
@@ -123,17 +128,41 @@ class InputEngine {
     }
 
     void handleInput(unsigned int c) {
+        validateTextSelection();
+        if(hasSelectedText) {
+            buffer.erase(selectIndexStart, selectIndexEnd - selectIndexStart);
+            cursor = selectIndexStart;
+            resetTextSelection();
+            validateCursor();
+        }
+
         if(cursor == buffer.length()) {
             buffer += c;
         } else {
             buffer = buffer.insert(cursor, 1, (char)c);
         }
+
         cursor++;
+
+        if(c == '(' && parenthesisBalance == 0) {
+            buffer += ')';
+        }
+
         lastInput = glfwGetTime();
         validateCursor();
+        checkBalance();
     }
 
     void handleBackspace() {
+        validateTextSelection();
+        if(hasSelectedText) {
+            buffer.erase(selectIndexStart, selectIndexEnd - selectIndexStart);
+            cursor = selectIndexStart;
+            resetTextSelection();
+            validateCursor();
+            return;
+        }
+
         if(buffer.size() >= 1) {
             if(cursor == buffer.length()) {
                 buffer.erase(buffer.length() - 1);
@@ -141,17 +170,88 @@ class InputEngine {
                 cursor = std::max(0, cursor);
             } else {
                 if(cursor != 0) {
-                    buffer.erase(std::max(cursor-1, 0), 1);
+                    int eraseLoc = std::max(cursor-1, 0);
+                    char deleted = buffer[eraseLoc];
+                    buffer.erase(eraseLoc, 1);
                     cursor--;
                     cursor = std::max(0, cursor);
+
+                    checkBalance();
+                    if(deleted == '(' && parenthesisBalance == -1) {
+                        if(buffer.length() > eraseLoc && buffer[eraseLoc] == ')') {
+                            buffer.erase(eraseLoc, 1);
+                        }
+                    }
                 }
             }
         }
+
         validateCursor();
+        checkBalance();
+    }
+
+    void startTextSelection() {
+        selectIndexStart = cursor;
+        selectIndexEnd = cursor;
+        hasSelectedText = true;
+    }
+
+    void validateTextSelection() {
+        int oStart = selectIndexStart;
+        int oEnd = selectIndexEnd;
+        selectIndexStart = std::max(0, std::min(oStart, oEnd));
+        selectIndexEnd = std::min(std::max(oStart, oEnd), (int)buffer.length());
+    }
+
+    void resetTextSelection() {
+        hasSelectedText = false;
     }
 
     void handleControl(int key, int scancode, int action, int mods) {
+        
+        if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
+            //std::cout << "start text selection" << std::endl;
+            startTextSelection();
+        }
+        if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE) {
+            //std::cout << "end text selection" << std::endl;
+            validateTextSelection();
+        }
+
+
         if(action == GLFW_PRESS || action == GLFW_REPEAT) {
+            if(key == GLFW_KEY_C && mods == GLFW_MOD_SUPER) {
+                if(hasSelectedText) {
+                    validateTextSelection();
+                    std::string selectedText = buffer.substr(selectIndexStart, selectIndexEnd - selectIndexStart);
+                    glfwSetClipboardString(window, selectedText.c_str());
+                }
+            }
+
+            if(key == GLFW_KEY_V && mods == GLFW_MOD_SUPER) {
+                const char* clipboardText = glfwGetClipboardString(window);
+                if(clipboardText != nullptr) {
+                    for(int i = 0; i < strlen(clipboardText); i++) {
+                        handleInput(clipboardText[i]);
+                    }
+                }
+            }
+
+            if(key == GLFW_KEY_X && mods == GLFW_MOD_SUPER) {
+                if(hasSelectedText) {
+                    validateTextSelection();
+                    std::string selectedText = buffer.substr(selectIndexStart, selectIndexEnd - selectIndexStart);
+                    glfwSetClipboardString(window, selectedText.c_str());
+                    handleBackspace();
+                }
+            }
+
+            if(key == GLFW_KEY_A && mods == GLFW_MOD_SUPER) {
+                selectIndexStart = 0;
+                selectIndexEnd = buffer.length();
+                hasSelectedText = true;
+            }
+
             if(key == GLFW_KEY_BACKSPACE) {
                 handleBackspace();
             }
@@ -186,10 +286,19 @@ class InputEngine {
             if(key == GLFW_KEY_LEFT) {
                 if(mods == GLFW_MOD_SUPER) {
                     cursor = 0;
-                } else if(mods == GLFW_MOD_ALT) {
-  
-                } else {
+                } else if(mods == GLFW_MOD_SHIFT) {
                     cursor--;
+                    selectIndexEnd = std::max(0, cursor);
+                } else if(mods == (GLFW_MOD_SUPER | GLFW_MOD_SHIFT)) {
+                    cursor = 0;
+                    selectIndexEnd = std::max(0, cursor);
+                } else {
+                    if(hasSelectedText) {
+                        resetTextSelection();
+                        cursor = selectIndexStart;
+                    } else {
+                        cursor--;
+                    }
                 }
 
                 cursor = std::max(0, cursor);
@@ -197,13 +306,23 @@ class InputEngine {
             if(key == GLFW_KEY_RIGHT) {
                 if(mods == GLFW_MOD_SUPER) {
                     cursor = buffer.length();
-                } else if(mods == GLFW_MOD_ALT) {
-
-                } else {
+                } else if(mods == GLFW_MOD_SHIFT) {
                     cursor++;
+                    selectIndexEnd = std::min((int)(buffer.length()), cursor);
+                } else if(mods == (GLFW_MOD_SUPER | GLFW_MOD_SHIFT)) {
+                    cursor = buffer.length();
+                    selectIndexEnd = std::min((int)(buffer.length()), cursor);
+                } else {
+                    if(hasSelectedText) {
+                        resetTextSelection();
+                        cursor = selectIndexEnd;
+                    } else {
+                        cursor++;
+                    }
                 }
 
                 cursor = std::min((int)(buffer.length()), cursor);
+                checkBalance();
             }
         }
         lastInput = glfwGetTime();
@@ -227,6 +346,17 @@ class InputEngine {
     void resetSuggestions() {
         suggestions.clear();
         suggestionsCursor = 0;
+    }
+
+    void checkBalance() {
+        parenthesisBalance = 0;
+        for(auto &i : buffer) {
+            if(i == '(') {
+                parenthesisBalance++;
+            } else if(i == ')') {
+                parenthesisBalance--;
+            }
+        }
     }
 
     void tick() {
@@ -272,7 +402,22 @@ class InputEngine {
     bool hasSuggestions;
     int cursorDepth;
     int cursorPairDepth;
+
+    int parenthesisBalance = 0;
+
+    int selectIndexEnd = 0;
+    int selectIndexStart = 0;
+    int hasSelectedText = false;
+
+    GLFWwindow* window;
 };
+
+glm::mat4 quadMat(float x, float y, float w, float h) {
+    glm::mat4 mat = glm::mat4(1.0f);
+    mat = glm::translate(mat, glm::vec3(x, y, 0.0f));
+    mat = glm::scale(mat, glm::vec3(w, h, 1.0f));
+    return mat;
+}
 
 int main() {
     runTests();
@@ -284,7 +429,7 @@ int main() {
         exit(-1);
     }
 
-    InputEngine* inputEngine = new InputEngine();
+    InputEngine* inputEngine = new InputEngine(window);
     
     glfwSetWindowUserPointer(window, inputEngine);
     glfwSetCharCallback(window, InputEngine::charCallbackStatic);
@@ -295,9 +440,16 @@ int main() {
     // glDepthFunc (GL_LESS);
     // glEnable(GL_CULL_FACE);
 
+    glm::mat4 projection = glm::ortho(0.f, width, height, 0.f, -0.1f, 0.1f);
+
     Graphics* graphics = new Graphics("assets/");
     SDFFont* sdfFont12 = new SDFFont(graphics, "fonts/RobotoMono-Regular_22.json");
-    sdfFont12->setProjectionMatrix(glm::ortho(0.f, width, height, 0.f, -0.1f, 0.1f));
+    
+    Shape* selectRect = new Shape(graphics, graphics->findMesh("tlquad"));
+    selectRect->col = glm::vec4(32., 145., 121., 255.) / glm::vec4(255.);
+
+
+    sdfFont12->setProjectionMatrix(projection);
 
     glClearColor(0.05, 0.05, 0.05, 1.0);
 
@@ -318,8 +470,12 @@ int main() {
         glm::vec3 position = glm::vec3(6., 22., 0.);
         glm::vec3 origPos = position;
 
-        float characterWidth = 0;
         bool showErrors = true;
+
+        if(inputEngine->hasSelectedText) {
+            selectRect->view = quadMat(origPos.x + inputEngine->selectIndexStart * sdfFont12->getMonospaceAdvance(), origPos.y - 18., sdfFont12->getMonospaceAdvance() * (inputEngine->selectIndexEnd - inputEngine->selectIndexStart), 22.);
+            selectRect->render(projection);
+        }
 
         int characterRunningCount = 0;
         for(auto &i : inputEngine->calculator->parsed->list) {
@@ -332,7 +488,6 @@ int main() {
                 (i.isParenthesis() && i.getPairId() == inputEngine->cursorPairDepth) ? 0.97 : 1,
                 0
             );
-            characterWidth = w / i.getValue().length();
             position.x += w;
             characterRunningCount += i.getValue().length();
         }
@@ -341,8 +496,8 @@ int main() {
 
         float q = 0;
         sdfFont12->renderTextSimple(
-            origPos + glm::vec3((characterWidth * inputEngine->cursor) - characterWidth * .5, 0., 0.), 
-            glm::vec3(1.) * glm::vec3(cursorState > 0. ? 1. : 0.05), 
+            origPos + glm::vec3((sdfFont12->getMonospaceAdvance() * inputEngine->cursor) - sdfFont12->getMonospaceAdvance() * .5, 0., 0.), 
+            glm::vec4(1., 1., 1., cursorState > 0. ? 1. : 0.05), 
             "|",
             q,
             1,
@@ -362,7 +517,7 @@ int main() {
             float w = 0;
             sdfFont12->renderTextSimple(
                 position, 
-                glm::vec3(.8), 
+                glm::vec4(.8, .8, .8, 1.), 
                 resultStream.str(),
                 w,
                 1,
@@ -383,8 +538,8 @@ int main() {
                         0
                     );
                     sdfFont12->renderTextSimple(
-                        position + glm::vec3(w + characterWidth, 0., 0.), 
-                        glm::vec3(.8), 
+                        position + glm::vec3(w + sdfFont12->getMonospaceAdvance(), 0., 0.), 
+                        glm::vec4(.8, .8, .8, 1.), 
                         i->getMessage(),
                         w,
                         1,
@@ -402,26 +557,25 @@ int main() {
             for(auto &s : suggestions) {
                 showErrors = false;
                 float lq = 0;
+
+                if(inputEngine->suggestionsCursor == index) {
+                    selectRect->view = quadMat(
+                        origPos.x + (sdfFont12->getMonospaceAdvance() * inputEngine->tokenStartOffset), 
+                        22. + yOff - 18., 
+                        sdfFont12->getMonospaceAdvance() * s.length(), 
+                        22.
+                    );
+                    selectRect->render(projection);
+                }
+
                 sdfFont12->renderTextSimple(
-                    origPos + glm::vec3((characterWidth * (inputEngine->tokenStartOffset)), yOff, 0.), 
-                    glm::vec3(.8), 
+                    origPos + glm::vec3((sdfFont12->getMonospaceAdvance() * (inputEngine->tokenStartOffset)), yOff, 0.), 
+                    glm::vec4(.8, .8, .8, 1.), 
                     s,
                     lq,
                     1,
                     0
                 );
-
-                if(inputEngine->suggestionsCursor == index) {
-                    float w = 0;
-                    sdfFont12->renderTextSimple(
-                        origPos + glm::vec3((characterWidth * (inputEngine->tokenStartOffset + s.length())) + characterWidth * .5, yOff, 0.), 
-                        glm::vec3(1.), 
-                        "<",
-                        w,
-                        1,
-                        0
-                    );
-                }
 
                 yOff += 22;
                 index++;

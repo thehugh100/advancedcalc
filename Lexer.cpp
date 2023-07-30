@@ -116,6 +116,9 @@ bool Lexer::lexInput(TokenList& tokenList) {
         if(i.isType(Token::TOKEN_NUMBER) && lastToken.isType(Token::TOKEN_NUMBER)) {
             calculator->reportError(new CalcError(i, "Unexpected number"));
         }
+        if(i.isType(Token::TOKEN_FUNCTION) && lastToken.isType(Token::TOKEN_FUNCTION)) {
+            calculator->reportError(new CalcError(i, "Unexpected function"));
+        }
         lastToken = i;
     }
 

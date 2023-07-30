@@ -118,7 +118,7 @@ void SDFFont::loadManifest(std::filesystem::path path) {
 
 void SDFFont::renderTextSimple( 
     glm::vec3 position, 
-    glm::vec3 col, 
+    glm::vec4 col, 
     std::string_view text, 
     float &computedWidth,
     float weight, 
@@ -149,6 +149,10 @@ void SDFFont::renderTextSimple(
         cursor++;
     }
     computedWidth = position.x - originPos.x;
+}
+
+float SDFFont::getMonospaceAdvance() {
+    return atlasEntries['M'].fontMetrics.z / 64.;
 }
 
 SDFFont::SDFFont(

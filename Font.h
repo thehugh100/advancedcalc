@@ -17,19 +17,25 @@ struct FontChar {
 class SDFFont {
     public:
     void loadAtlas(std::filesystem::path path);
+    
     void loadManifest(std::filesystem::path path);
+    
     void renderTextSimple( 
         glm::vec3 position, 
-        glm::vec3 col, 
+        glm::vec4 col, 
         std::string_view text, 
         float &computedWidth,
         float weight = 1.f, 
         float italics = 0.f
     );
+
+    float getMonospaceAdvance();
+
     SDFFont(
         Graphics* graphics, 
         std::filesystem::path path
     );
+
     ~SDFFont();
 
     void setProjectionMatrix(glm::mat4 nProjectionMatrix);

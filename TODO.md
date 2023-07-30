@@ -6,12 +6,20 @@ Refernce the result of a previous expression
 
 Graphing if expression written in terms of x
 
-Advanced keyboard input, hilighting, alt/option + left/right, clipboard, etc.
+Advanced keyboard input, ~~hilighting~~, alt/option + left/right, ~~clipboard~~, etc.
 
-Better display of errors, better display of suggestions
+Better display of errors, ~~better display of suggestions~~
 
 Create proper input engine class, seperate it out of main
 
 Custom functions?
 
 Make Parser a unique_ptr
+
+Better testing framework, ability to set tests expected to fail
+
+~~auto closing brackets~~
+
+AAGL errors
+
+Bitwise operators

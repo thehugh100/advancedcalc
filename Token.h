@@ -19,9 +19,13 @@ public:
     void setType(int nType);
     const bool isParenthesis();
     const bool isType(int v);
-    bool isResolved();
+
+    bool isConstantIdentifier() const;
+    bool isFunctionIdentifier() const;
+    bool isResolved() const;
+
     bool isValidOperator();
-    glm::vec3 getColor();
+    glm::vec4 getColor();
     
     void setDepth(int nDepth);
     int getDepth() const;

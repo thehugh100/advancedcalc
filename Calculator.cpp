@@ -160,6 +160,9 @@ double Calculator::computeFunctionResult(const Token func) {
     return 0.0;
 }
 
+//1 + 1
+//ADD 1, 3.1415
+
 double Calculator::computeResult(const TokenList& outputQueue) {
     std::stack<double> operandStack;
 
