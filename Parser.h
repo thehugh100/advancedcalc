@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include <string_view>
 
@@ -19,6 +20,7 @@ public:
     static bool isCharOpenParenthesis(char i);
     static bool isCharCloseParenthesis(char i);
     static bool isCharParenthesis(char i);
+    static bool isCharSemiColon(char i);
 
     static int tokenTypeFromChar(int i);
 
@@ -26,6 +28,7 @@ public:
     static const std::vector<Operator_t> operators;
 
     bool parseInput(std::string_view input, TokenList& tokenList);
+    void preprocessInput(std::string_view input, std::vector<std::string>& lines);
 private:
     Calculator* calculator;
 };

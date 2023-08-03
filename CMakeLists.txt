@@ -17,6 +17,7 @@ add_executable(
     CalcError.cpp
     Instruction.cpp
     InstructionVM.cpp
+    Graph.cpp
 )
 target_link_directories(advancedcalc PUBLIC ./deps/AAGL/build ./deps/glfw/build/src)
 target_include_directories(advancedcalc PUBLIC ./deps/AAGL ./deps/glfw/include ./deps/glm ./include)

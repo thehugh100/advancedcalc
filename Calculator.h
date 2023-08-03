@@ -43,10 +43,12 @@ public:
     TokenList* parsed;
 
     double executeInstructions();
+    void dumpInstructions();
 
     std::shared_ptr<Parser> parser;
     std::shared_ptr<Lexer> lexer;
     std::shared_ptr<InstructionVM> vm;
+    bool isGraph;
 private:
     bool debug;
     bool validResult;

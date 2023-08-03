@@ -21,6 +21,7 @@ Calculator::Calculator(bool debug)
     :debug(debug), lexer(std::make_shared<Lexer>(this)), parser(std::make_shared<Parser>(this)), vm(std::make_shared<InstructionVM>()) {
     parsed = new TokenList();
     validResult = true;
+    isGraph = false;
     clearErrors();
 }
 
@@ -53,7 +54,7 @@ TokenList Calculator::performShuntingYard(const TokenList& tokens) {
             } else {
                 reportError(new CalcError(refTkn, "Unknown Identifier"));
             }
-        } else if (tokenType == Token::TOKEN_NUMBER || tokenType == Token::TOKEN_FUNCTION) {
+        } else if (tokenType == Token::TOKEN_NUMBER || tokenType == Token::TOKEN_FUNCTION || tokenType == Token::TOKEN_VARIABLE) {
             outputQueue.list.push_back(token);
         } else if (tokenType == Token::TOKEN_OPERATOR) {
             while (!operatorStack.empty() && operatorStack.top().isType(Token::TOKEN_OPERATOR) &&
@@ -206,31 +207,47 @@ void Calculator::compileFunctionCall(const Token func, std::vector<Instruction>&
 }
 
 void Calculator::compileTokens(const TokenList& tokens, std::vector<Instruction>& instructions) {
-    for (const auto& token : tokens.list) {
-        if(token.isType(Token::TOKEN_NUMBER)) {
-            instructions.push_back(
-                Instruction(Instruction::OP_PUSH, Operand(Operand::TYPE_NUMBER, std::stod(token.getValue())))
-            );
-        } else if(token.isType(Token::TOKEN_OPERATOR)) {
-            instructions.push_back(
-                Instruction(Instruction::OP_OPERATOR, Operand(Operand::TYPE_OPERATOR, (char)token.getValue()[0]))
-            );
-        } else if(token.isType(Token::TOKEN_FUNCTION)) {
-            std::vector<Instruction> funcByteCode;
-            std::string funcName;
-            compileFunctionCall(token, funcByteCode, funcName);
-            for(auto &i : funcByteCode) {
-                instructions.push_back(i);
+        for (const auto& token : tokens.list) {
+            if(token.isType(Token::TOKEN_NUMBER)) {
+                try {
+                    instructions.push_back(
+                        Instruction(Instruction::OP_PUSH, Operand(Operand::TYPE_NUMBER, std::stod(token.getValue())))
+                    );
+                } catch (std::exception &e){
+                    reportError(new CalcError(Token(Token::TOKEN_NUMBER, ""), "Compilation error: " + std::string(e.what()) + " " + token.getValue()));
+                }
+            } else if(token.isType(Token::TOKEN_VARIABLE)) {
+                if(token.getValue() == "x")
+                    isGraph = true;
+
+                instructions.push_back(
+                    Instruction(Instruction::OP_PUSH, Operand(Operand::TYPE_VARIABLE, token.getValue()))
+                );
+            } else if(token.isType(Token::TOKEN_OPERATOR)) {
+                instructions.push_back(
+                    Instruction(Instruction::OP_OPERATOR, Operand(Operand::TYPE_OPERATOR, (char)token.getValue()[0]))
+                );
+            } else if(token.isType(Token::TOKEN_FUNCTION)) {
+                std::vector<Instruction> funcByteCode;
+                std::string funcName;
+                compileFunctionCall(token, funcByteCode, funcName);
+                for(auto &i : funcByteCode) {
+                    instructions.push_back(i);
+                }
+                instructions.push_back(
+                    Instruction(Instruction::OP_CALL, Operand(Operand::TYPE_FUNCTION, funcName))
+                );
             }
-            instructions.push_back(
-                Instruction(Instruction::OP_CALL, Operand(Operand::TYPE_FUNCTION, funcName))
-            );
         }
-    }
 }
 
-double Calculator::computeResult(const TokenList& outputQueue) {
+double Calculator::computeResult(const TokenList& outputQueue) { //TODO: deprecate this, only used for error checking
+    if(outputQueue.list.size() == 0) {
+        return 0;
+    }
+
     std::stack<double> operandStack;
+    std::stack<int> typeStack;
 
     for (const auto& token : outputQueue.list) {
         const int tokenType = token.getType();
@@ -238,15 +255,20 @@ double Calculator::computeResult(const TokenList& outputQueue) {
 
         if (tokenType == Token::TOKEN_IDENTIFIER) {
             reportError(new CalcError(Token(tokenType, tokenValue), "Unknown Identifier"));
+        } else if (tokenType == Token::TOKEN_VARIABLE) {
+                operandStack.push(0.);
+                typeStack.push(Operand::TYPE_VARIABLE);
         } else if (tokenType == Token::TOKEN_NUMBER) {
             try {
                 operandStack.push(std::stod(tokenValue));
+                typeStack.push(Operand::TYPE_NUMBER);
             } catch(std::exception &e) {
                 reportError(new CalcError(Token(tokenType, tokenValue), "Invalid Number"));
                 return 0;
             }
         } else if (tokenType == Token::TOKEN_FUNCTION) {
             operandStack.push(computeFunctionResult(token));
+            typeStack.push(Operand::TYPE_FUNCTION);
         } else if (tokenType == Token::TOKEN_OPERATOR) {
             if(!Token(tokenType, tokenValue).isValidOperator()) {
                 reportError(new CalcError(Token(tokenType, tokenValue), "Invalid Operator: " + tokenValue));
@@ -259,27 +281,44 @@ double Calculator::computeResult(const TokenList& outputQueue) {
             }
 
             double operand2 = operandStack.top();
+            int operand2Type = typeStack.top();
             operandStack.pop();
+            typeStack.pop();
+
             double operand1 = operandStack.top();
+            int operand1Type = typeStack.top();
             operandStack.pop();
+            typeStack.pop();
 
             if (tokenValue == "+") {
                 operandStack.push(operand1 + operand2);
+                typeStack.push(Operand::TYPE_NUMBER);
             } else if (tokenValue == "-") {
                 operandStack.push(operand1 - operand2);
+                typeStack.push(Operand::TYPE_NUMBER);
             } else if (tokenValue == "*") {
                 operandStack.push(operand1 * operand2);
+                typeStack.push(Operand::TYPE_NUMBER);
             } else if (tokenValue == "^") {
                 operandStack.push(pow(operand1, operand2));
+                typeStack.push(Operand::TYPE_NUMBER);
             } else if (tokenValue == "%") {
                 operandStack.push((int)operand1 % (int)operand2);
+                typeStack.push(Operand::TYPE_NUMBER);
             } else if (tokenValue == "/") {
                 if (operand2 == 0) {
                     reportError(new CalcError(Token(tokenType, tokenValue), "Division by zero"));
                     throw std::runtime_error("Division by zero");
                 }
-
                 operandStack.push(operand1 / operand2);
+                typeStack.push(Operand::TYPE_NUMBER);
+            } else if (tokenValue == "=") {
+                if(operand1Type != Operand::TYPE_VARIABLE) {
+                    reportError(new CalcError(Token(tokenType, tokenValue), "Invalid Assignment, left hand side must be a variable"));
+                    throw std::runtime_error("Invalid assignment");
+                }
+                operandStack.push(operand1 = operand2);
+                typeStack.push(Operand::TYPE_NUMBER);
             } else {
                 reportError(new CalcError(Token(tokenType, tokenValue), "Invalid Operator"));
                 throw std::runtime_error("Invalid operator");
@@ -335,36 +374,48 @@ double Calculator::processTokens(TokenList& list) {
 double Calculator::calculateInput(std::string_view input) {
     clearErrors();
     validResult = true;
+    isGraph = false;
 
-    TokenList parsedInput;
-    parser->parseInput(input, parsedInput);
-
+    std::vector<std::string> lines;
+    parser->preprocessInput(input, lines);
+    
     parsed->list.clear();
-    for(auto&i : parsedInput.list) {
-        parsed->list.push_back(i);
-    }
 
+    for(auto&i : lines) {
+        TokenList parsedInput;
+        parser->parseInput(i, parsedInput);
+        for(auto&i : parsedInput.list) {
+            parsed->list.push_back(i);
+        }
+
+        if(debug) {
+            std::cout << "---Input---" << std::endl;
+            parsedInput.print();
+        }
+
+        processTokens(parsedInput);
+    }
+    
     hintTokens(*parsed);
 
-    if(debug) {
-        std::cout << "---Input---" << std::endl;
-        parsedInput.print();
-    }
-
-    return processTokens(parsedInput);
+    return 0;
 }
 
 void Calculator::compileInput(std::string_view input) {
     calculateInput(input); //TODO: lame way to error check
     compiledInstructions.clear();
     if(validResult) {
-        TokenList list;
-        parser->parseInput(input, list);
-        lexer->lexInput(list);
-        TokenList shuntedList;
-        shuntedList = performShuntingYard(list);
+        std::vector<std::string> lines;
+        parser->preprocessInput(input, lines);
 
-        compileTokens(shuntedList, compiledInstructions);
+        for(auto&i : lines) {
+            TokenList list;
+            parser->parseInput(i, list);
+            lexer->lexInput(list);
+            TokenList shuntedList;
+            shuntedList = performShuntingYard(list);
+            compileTokens(shuntedList, compiledInstructions);
+        }
     }
 }
 
@@ -419,7 +470,14 @@ double Calculator::executeInstructions() {
         reportError(new CalcError(Token(Token::TOKEN_EXPRESSION, parsed->toString()), "No result on stack"));
         return 0.0;
     }
-    return vm->getStack()->top();
+    return vm->getResult();
+}
+
+void Calculator::dumpInstructions() {
+    std::cout << "---Compiled Instructions---" << std::endl;
+    for(auto &i : compiledInstructions) {
+        std::cout << i.toString() << std::endl;
+    }
 }
 
 std::shared_ptr<std::vector<CalcError*>> Calculator::getErrors() {

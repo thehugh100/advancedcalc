@@ -46,7 +46,7 @@ bool Token::isResolved() const {
 }
 
 bool Token::isValidOperator() {
-    if(value.length() != 1)
+    if(value.length() != 1) //TODO add support for multi-char operators
         return false;
 
     for(auto &i : Parser::operators) {
@@ -75,6 +75,7 @@ glm::vec4 Token::getColor() {
         {Token::TOKEN_CLOSE_PARENTHESIS, parenths},
         {Token::TOKEN_COMMA, parenths},
         {Token::TOKEN_IDENTIFIER, identifer},
+        {Token::TOKEN_SEMICOLON, parenths},
         {Token::TOKEN_FUNCTION, identifer},
         {Token::TOKEN_NULL, glm::vec3(1., 1., 1.)},
         {Token::TOKEN_UNKNOWN, glm::vec3(.5)},
@@ -119,6 +120,7 @@ std::string_view Token::getName() const
 
 const std::map<int, std::string> Token::tokenNames = {
     {TOKEN_NUMBER, "TOKEN_NUMBER"},
+    {TOKEN_VARIABLE, "TOKEN_VARIABLE"},
     {TOKEN_OPERATOR, "TOKEN_OPERATOR"},
     {TOKEN_EXPRESSION, "TOKEN_EXPRESSION"},
     {TOKEN_WHITESPACE, "TOKEN_WHITESPACE"},
@@ -126,6 +128,7 @@ const std::map<int, std::string> Token::tokenNames = {
     {TOKEN_CLOSE_PARENTHESIS, "TOKEN_CLOSE_PARENTHESIS"},
     {TOKEN_COMMA, "TOKEN_COMMA"},
     {TOKEN_IDENTIFIER, "TOKEN_IDENTIFIER"},
+    {TOKEN_SEMICOLON, "TOKEN_SEMICOLON"},
     {TOKEN_FUNCTION, "TOKEN_FUNCTION"},
     {TOKEN_NULL, "TOKEN_NULL"},
     {TOKEN_UNKNOWN, "TOKEN_UNKNOWN"},

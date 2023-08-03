@@ -4,9 +4,17 @@ Multiple expressions in a single instance
 
 Refernce the result of a previous expression
 
-Graphing of expression written in terms of x
+~~Graphing of expression written in terms of x~~
+
+Move graphing to a seperate class that owns the graph shape, sendData function, only calculate when changed
 
 Advanced keyboard input, ~~hilighting~~, alt/option + left/right, ~~clipboard~~, etc.
+
+Multicharacter operators
+
+empty parameter bug
+
+unary negative variables, parentheses, function calls
 
 Better display of errors, ~~better display of suggestions~~
 

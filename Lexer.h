@@ -10,6 +10,7 @@ class Lexer {
     Lexer(Calculator* calculator);
     bool lexInput(TokenList& tokenList);
     bool expandConstants(TokenList& tokenList);
+    void expandVariables(TokenList& tokenList);
 
     Calculator* calculator;
     private:

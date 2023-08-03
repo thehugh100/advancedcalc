@@ -2,6 +2,8 @@
 #include <string>
 #include <stack>
 
+class InstructionVM;
+
 class Operand {
     public:
     Operand(int type, double value);
@@ -16,7 +18,7 @@ class Operand {
         TYPE_OPERATOR
     };
 
-    double getValue() const;
+    double getValue(InstructionVM* vm) const;
     std::string getName() const;
     char getOperatorSymbol() const;
 
@@ -30,9 +32,9 @@ class Operand {
 class Instruction {
     public:
     Instruction(int operation, Operand operand);
-    void execute(std::stack<double>& stack);
-    void executeFunctionCall(std::stack<double>& stack);
-    void executeOperator(std::stack<double>& stack);
+    void execute(std::stack<Operand>& stack, InstructionVM* vm);
+    void executeFunctionCall(std::stack<Operand>& stack, InstructionVM* vm);
+    void executeOperator(std::stack<Operand>& stack, InstructionVM* vm);
 
     std::string toString() const;
 

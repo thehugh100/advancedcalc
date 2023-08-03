@@ -26,15 +26,11 @@ bool Lexer::lexInput(TokenList& tokenList) {
     bool joiningIdentifier = 0;
     int parenthesisCount = 0;
 
-    // original.list.erase(std::remove_if(original.list.begin(), original.list.end(),
-    //     [](const Token& token) {
-    //         return token.getType() == Token::TOKEN_WHITESPACE;
-    //     }),
-    //     original.list.end()
-    // );
-
     for(auto &i : original.list) {
         if(i.isType(Token::TOKEN_WHITESPACE) && !joiningFunction) {
+            continue;
+        }
+        if(i.isType(Token::TOKEN_SEMICOLON)) {
             continue;
         }
         if(joiningFunction) {
@@ -107,7 +103,8 @@ bool Lexer::lexInput(TokenList& tokenList) {
     }
 
     expandConstants(tokenList);
-    
+    expandVariables(tokenList);
+
     lastToken = {Token::TOKEN_NULL, ""};
     for(auto &i : tokenList.list) {
         if(i.isType(Token::TOKEN_OPERATOR) && lastToken.isType(Token::TOKEN_OPERATOR)) {
@@ -124,6 +121,14 @@ bool Lexer::lexInput(TokenList& tokenList) {
 
 
     return true;
+}
+
+void Lexer::expandVariables(TokenList& tokenList) {
+    for(auto &i : tokenList.list) {
+        if(i.isType(Token::TOKEN_IDENTIFIER) && !i.isResolved()) {
+            i.setType(Token::TOKEN_VARIABLE);
+        }
+    }
 }
 
 bool Lexer::expandConstants(TokenList& tokenList) {

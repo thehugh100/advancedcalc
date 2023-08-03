@@ -13,6 +13,7 @@
 
 #include <AAGL/Graphics.h>
 #include <AAGL/Shape.h>
+#include <AAGL/Mesh.h>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include "Font.h"
@@ -22,6 +23,9 @@
 #include "CalcError.h"
 #include "Functions.h"
 #include "Instruction.h"
+#include "InstructionVM.h"
+#include "Helper.h"
+#include "Graph.h"
 
 void runTests() {
     auto calculator = std::make_shared<Calculator>(false);
@@ -44,7 +48,10 @@ void runTests() {
 
     int passes = 0;
     for(auto &i : testCases) {
-        double result = calculator->calculateInput(i.first);
+        calculator->calculateInput(i.first);
+        calculator->compileInput(i.first);
+        double result = calculator->executeInstructions();
+
         if(result != i.second || !calculator->resultIsValid()) {
             std::cout << "Test case failed: '" << i.first << "', expected: " << i.second << ", got: " << result << std::endl;
             calculator->setDebug(true);
@@ -93,7 +100,7 @@ GLFWwindow* createWindow(float w, float h) {
 
 class InputEngine {
     public:
-    InputEngine(GLFWwindow* window) :buffer(""), window(window) {
+    InputEngine(GLFWwindow* window, Graph* graph) :buffer(""), window(window), graph(graph) {
         cursor = 0;
         lastInput = 0;
         calculator = new Calculator(false);
@@ -109,6 +116,11 @@ class InputEngine {
         parenthesisBalance = 0;
         lastInsertedChar = 0;
         resultInvalid = true;
+    }
+
+    ~InputEngine() {
+        delete calculator;
+        delete graph;
     }
 
     void validateCursor() {
@@ -130,7 +142,7 @@ class InputEngine {
         }
     }
 
-    void handleInput(unsigned int c) {
+    void handleInput(unsigned int c, bool processCharacters = true) {
         resultInvalid = true;
         validateTextSelection();
         if(hasSelectedText) {
@@ -141,7 +153,7 @@ class InputEngine {
         }
 
 
-        if(c == ')' && parenthesisBalance == 0 && lastInsertedChar == '(') {
+        if(c == ')' && parenthesisBalance == 0 && lastInsertedChar == '(' && processCharacters) {
             cursor++;
             validateCursor();
             checkBalance();
@@ -157,7 +169,7 @@ class InputEngine {
 
         cursor++;
 
-        if(c == '(' && parenthesisBalance == 0) {
+        if(c == '(' && parenthesisBalance == 0 && processCharacters) {
             //buffer += ')';
             if(cursor == buffer.length()) {
                 buffer += ')';
@@ -251,7 +263,7 @@ class InputEngine {
                 const char* clipboardText = glfwGetClipboardString(window);
                 if(clipboardText != nullptr) {
                     for(int i = 0; i < strlen(clipboardText); i++) {
-                        handleInput(clipboardText[i]);
+                        handleInput(clipboardText[i], false);
                     }
                 }
             }
@@ -381,9 +393,29 @@ class InputEngine {
     void tick() {
         if(resultInvalid) {
             calculator->calculateInput(buffer); //bad way to error check
+            resultInvalid = false;
             if(calculator->resultIsValid()) {
+                calculator->vm->reset();
                 calculator->compileInput(buffer);
                 result = calculator->executeInstructions();
+
+                if(calculator->resultIsValid() && calculator->isGraph) {
+                    calculator->vm->reset();
+                    std::vector<float> points;            
+                    float sX = -1.;
+                    float eX = 1.;
+                    float steps = 800.;
+                    float stepSize = (eX * 2) / steps;
+                    for(float x = sX; x <= eX; x += stepSize) {
+                        calculator->vm->setVar("x", x);
+                        points.push_back(x); //x
+                        points.push_back(-calculator->executeInstructions()); //y
+                        points.push_back(0); //z
+                        points.push_back(0); //s
+                        points.push_back(0); //t
+                    }
+                    graph->addData(points);
+                }
             } else {
                 result = 0;
             }
@@ -439,14 +471,8 @@ class InputEngine {
     char lastInsertedChar = 0;
     bool resultInvalid;
     GLFWwindow* window;
+    Graph* graph;
 };
-
-glm::mat4 quadMat(float x, float y, float w, float h) {
-    glm::mat4 mat = glm::mat4(1.0f);
-    mat = glm::translate(mat, glm::vec3(x, y, 0.0f));
-    mat = glm::scale(mat, glm::vec3(w, h, 1.0f));
-    return mat;
-}
 
 int main() {
     runTests();
@@ -458,13 +484,10 @@ int main() {
         exit(-1);
     }
 
-    InputEngine* inputEngine = new InputEngine(window);
-    
-    glfwSetWindowUserPointer(window, inputEngine);
-    glfwSetCharCallback(window, InputEngine::charCallbackStatic);
-    glfwSetKeyCallback(window, InputEngine::keyCallbackStatic);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
+    glEnable(GL_LINE_SMOOTH);
+
     // glEnable(GL_DEPTH_TEST);
     // glDepthFunc (GL_LESS);
     // glEnable(GL_CULL_FACE);
@@ -472,7 +495,10 @@ int main() {
     glm::mat4 projection = glm::ortho(0.f, width, height, 0.f, -0.1f, 0.1f);
 
     Graphics* graphics = new Graphics("assets/");
-    SDFFont* sdfFont12 = new SDFFont(graphics, "fonts/RobotoMono-Regular_22.json");
+
+    SDFFont* sdfFontDisplay = new SDFFont(graphics, "fonts/RobotoMono-Regular_22.json");
+    SDFFont* sdfFontSmall = new SDFFont(graphics, "fonts/RobotoMono-Regular_16.json");
+
     
     Shape* selectRect = new Shape(graphics, graphics->findMesh("tlquad"));
     selectRect->col = glm::vec4(32., 145., 121., 255.) / glm::vec4(255.);
@@ -480,14 +506,28 @@ int main() {
     Shape* hintRect = new Shape(graphics, graphics->findMesh("tlquad"));
     hintRect->col = glm::vec4(255., 255., 255., 32.) / glm::vec4(255.);
 
-    sdfFont12->setProjectionMatrix(projection);
+    Shape* gridRect = new Shape(graphics, graphics->findMesh("tlquad"));
+    gridRect->col = glm::vec4(255., 255., 255., 16.) / glm::vec4(255.);
+    gridRect->shader = graphics->lazyLoadShader("shaders/grid");
+
+    sdfFontDisplay->setProjectionMatrix(projection);
+    sdfFontSmall->setProjectionMatrix(projection);
+
+    InputEngine* inputEngine = new InputEngine(window, new Graph(graphics, 0, 26, width, height-26));
+    glfwSetWindowUserPointer(window, inputEngine);
+    glfwSetCharCallback(window, InputEngine::charCallbackStatic);
+    glfwSetKeyCallback(window, InputEngine::keyCallbackStatic);
 
     glClearColor(0.05, 0.05, 0.05, 1.0);
+
+    glfwSwapInterval(1);
 
     while (!glfwWindowShouldClose(window)) {
         if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             inputEngine->calculator->setDebug(true);
             inputEngine->calculator->calculateInput(inputEngine->buffer);
+            inputEngine->calculator->dumpInstructions();
+
             glfwSetWindowShouldClose(window, true);
             break;
         }
@@ -504,19 +544,19 @@ int main() {
         bool showErrors = true;
 
         if(inputEngine->hasSelectedText) {
-            selectRect->view = quadMat(origPos.x + inputEngine->selectIndexStart * sdfFont12->getMonospaceAdvance(), origPos.y - 18., sdfFont12->getMonospaceAdvance() * (inputEngine->selectIndexEnd - inputEngine->selectIndexStart), 22.);
+            selectRect->view = Helper::quadMat(origPos.x + inputEngine->selectIndexStart * sdfFontDisplay->getMonospaceAdvance(), origPos.y - 18., sdfFontDisplay->getMonospaceAdvance() * (inputEngine->selectIndexEnd - inputEngine->selectIndexStart), 22.);
             selectRect->render(projection);
         }
 
         int characterRunningCount = 0;
         for(auto &i : inputEngine->calculator->parsed->list) {
             if (i.isParenthesis() && i.getPairId() == inputEngine->cursorPairDepth) {
-                hintRect->view = quadMat(origPos.x + characterRunningCount * sdfFont12->getMonospaceAdvance(), origPos.y - 18., sdfFont12->getMonospaceAdvance(), 22.);
+                hintRect->view = Helper::quadMat(origPos.x + characterRunningCount * sdfFontDisplay->getMonospaceAdvance(), origPos.y - 18., sdfFontDisplay->getMonospaceAdvance(), 22.);
                 hintRect->render(projection);
             }
 
             float w = 0;
-            sdfFont12->renderTextSimple(
+            sdfFontDisplay->renderTextSimple(
                 position,
                 i.getColor(), 
                 i.getValue(),
@@ -531,16 +571,16 @@ int main() {
         bool cursorState = (sin(time * 5.) > 0.) || ((glfwGetTime() - inputEngine->lastInput) < .25);
 
         float q = 0;
-        sdfFont12->renderTextSimple(
-            origPos + glm::vec3((sdfFont12->getMonospaceAdvance() * inputEngine->cursor) - sdfFont12->getMonospaceAdvance() * .5, 0., 0.), 
-            glm::vec4(1., 1., 1., cursorState > 0. ? 1. : 0.05), 
+        sdfFontDisplay->renderTextSimple(
+            origPos + glm::vec3((sdfFontDisplay->getMonospaceAdvance() * inputEngine->cursor) - sdfFontDisplay->getMonospaceAdvance() * .5, 0., 0.), 
+            glm::vec4(1., 1., 1., cursorState > 0. ? 1. : 0.), 
             "|",
             q,
             1,
             0
         );
 
-        if(inputEngine->calculator->resultIsValid()) {
+        if(inputEngine->calculator->resultIsValid() && !inputEngine->calculator->isGraph) {
             std::ostringstream resultStream;
 
             resultStream << " = ";
@@ -551,7 +591,7 @@ int main() {
             }
 
             float w = 0;
-            sdfFont12->renderTextSimple(
+            sdfFontDisplay->renderTextSimple(
                 position, 
                 glm::vec4(.8, .8, .8, 1.), 
                 resultStream.str(),
@@ -565,7 +605,7 @@ int main() {
                 glm::vec3 position = origPos + glm::vec3(0., 22., 0.);
                 for(const auto &i : *errors) {
                     float w = 0;
-                    sdfFont12->renderTextSimple(
+                    sdfFontDisplay->renderTextSimple(
                         position, 
                         i->getToken().getColor(), 
                         i->getToken().getValue(),
@@ -573,8 +613,8 @@ int main() {
                         1,
                         0
                     );
-                    sdfFont12->renderTextSimple(
-                        position + glm::vec3(w + sdfFont12->getMonospaceAdvance(), 0., 0.), 
+                    sdfFontDisplay->renderTextSimple(
+                        position + glm::vec3(w + sdfFontDisplay->getMonospaceAdvance(), 0., 0.), 
                         glm::vec4(.8, .8, .8, 1.), 
                         i->getMessage(),
                         w,
@@ -595,17 +635,17 @@ int main() {
                 float lq = 0;
 
                 if(inputEngine->suggestionsCursor == index) {
-                    selectRect->view = quadMat(
-                        origPos.x + (sdfFont12->getMonospaceAdvance() * inputEngine->tokenStartOffset), 
+                    selectRect->view = Helper::quadMat(
+                        origPos.x + (sdfFontDisplay->getMonospaceAdvance() * inputEngine->tokenStartOffset), 
                         22. + yOff - 18., 
-                        sdfFont12->getMonospaceAdvance() * s.length(), 
+                        sdfFontDisplay->getMonospaceAdvance() * s.length(), 
                         22.
                     );
                     selectRect->render(projection);
                 }
 
-                sdfFont12->renderTextSimple(
-                    origPos + glm::vec3((sdfFont12->getMonospaceAdvance() * (inputEngine->tokenStartOffset)), yOff, 0.), 
+                sdfFontDisplay->renderTextSimple(
+                    origPos + glm::vec3((sdfFontDisplay->getMonospaceAdvance() * (inputEngine->tokenStartOffset)), yOff, 0.), 
                     glm::vec4(.8, .8, .8, 1.), 
                     s,
                     lq,
@@ -618,22 +658,40 @@ int main() {
             }
         }
 
-        float yOff = 100;
-        for(auto &i : inputEngine->calculator->compiledInstructions) {
-            float lq = 0;
-            sdfFont12->renderTextSimple(
-                origPos + glm::vec3(640, yOff, 0.), 
-                glm::vec4(.8, .8, .8, 1.),
-                i.toString(),
-                lq,
-                1,
-                0
-            );
-            yOff += 22;
+        float widestString = 0;
+        if(inputEngine->calculator->resultIsValid()) {
+            for(auto &i : inputEngine->calculator->compiledInstructions) {
+                widestString = std::max(widestString, (sdfFontSmall->getMonospaceAdvance() * i.toString().length()) + sdfFontSmall->getMonospaceAdvance());
+            }
+
+            float yOff = sdfFontSmall->size;
+            for(auto &i : inputEngine->calculator->compiledInstructions) {
+                float lq = 0;
+                sdfFontSmall->renderTextSimple(
+                    glm::vec3(width - widestString, yOff, 0.), 
+                    glm::vec4(.8, .8, .8, 1.),
+                    i.toString(),
+                    lq,
+                    1,
+                    0
+                );
+                yOff += sdfFontSmall->size;
+            }
+        }
+
+        inputEngine->graph->setDimensions(
+            inputEngine->graph->getX(), 
+            inputEngine->graph->getY(), 
+            width - widestString - 2.,
+            inputEngine->graph->getH());
+
+        if(inputEngine->calculator->resultIsValid() && inputEngine->calculator->isGraph) {
+            inputEngine->graph->render(projection);
         }
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
+        //glfwPollEvents();
+        glfwWaitEventsTimeout(1 / 10.);
     }
 
     glfwTerminate();

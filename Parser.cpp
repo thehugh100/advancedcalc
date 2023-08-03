@@ -46,6 +46,10 @@ bool Parser::isCharParenthesis(char i) {
     return Parser::isCharOpenParenthesis(i) || Parser::isCharCloseParenthesis(i);
 }
 
+bool Parser::isCharSemiColon(char i) {
+    return i == ';';
+}
+
 int Parser::tokenTypeFromChar(int i) {
     if (i == ' ') {
         return Token::TOKEN_WHITESPACE;
@@ -61,6 +65,8 @@ int Parser::tokenTypeFromChar(int i) {
         return Token::TOKEN_COMMA;
     } else if (Parser::isCharIdentifierStart(i)) {
         return Token::TOKEN_IDENTIFIER;
+    } else if (Parser::isCharSemiColon(i)) {
+        return Token::TOKEN_SEMICOLON;
     } else {
         return Token::TOKEN_UNKNOWN;
     }
@@ -73,6 +79,7 @@ const std::vector<Operator_t> Parser::operators = {
     {'/', 2},
     {'%', 2},
     {'^', 3},
+    {'=', 4}
 };
 
 bool Parser::parseInput(std::string_view input, TokenList& tokenList) {
@@ -123,4 +130,20 @@ bool Parser::parseInput(std::string_view input, TokenList& tokenList) {
     }
 
     return true;
+}
+
+void Parser::preprocessInput(std::string_view input, std::vector<std::string>& lines) {
+    lines.clear();
+    std::string buf = "";
+    for(auto &i : input) {
+        if(i == ';') {
+            lines.push_back(buf);
+            buf = "";
+        }
+        
+        buf += i;
+    }
+    if(buf != "") {
+        lines.push_back(buf);
+    }   
 }
